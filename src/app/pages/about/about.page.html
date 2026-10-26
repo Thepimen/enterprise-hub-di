@@ -1,0 +1,163 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button routerLink="/inicio" class="back-home-btn" title="Volver a la página de Inicio">
+        <ion-icon slot="start" name="home-outline"></ion-icon>
+        <span class="btn-label">Inicio</span>
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title>
+      <div class="toolbar-brand">
+        <span class="brand-title">Acerca de la Consultora</span>
+        <ion-badge color="primary" class="badge-consultancy">DAM2 Tech</ion-badge>
+      </div>
+    </ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" class="theme-toggle-btn">
+        <ion-icon slot="icon-only" [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+      </ion-button>
+      <ion-button routerLink="/productos" fill="clear" class="catalog-nav-btn">
+        <ion-icon slot="start" name="library-outline"></ion-icon>
+        <span class="btn-label-desktop">Catálogo</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="about-content">
+  <div class="about-container">
+
+    <!-- Hero Corporativo -->
+    <section class="corporate-hero">
+      <div class="hero-tag">
+        <span class="tag-pulse"></span>
+        <span>Consultora de Ingeniería Software · Nebrija DAM2</span>
+      </div>
+
+      <h1 class="hero-headline">
+        Especialistas en Interfaces Modernas y
+        <span class="gradient-accent">Soluciones Multiplataforma</span>
+      </h1>
+
+      <p class="hero-lead">
+        Somos una consultora de desarrollo de software nacida en el marco de <strong>DAM2 (Desarrollo de Aplicaciones Multiplataforma)</strong>, 
+        enfocada en la creación de aplicaciones web SPA y móviles de alto rendimiento mediante el stack 
+        <strong>Angular Standalone</strong>, <strong>Ionic Framework</strong> e integración avanzada con 
+        <strong>Cloud APIs</strong> como Google Books.
+      </p>
+
+      <div class="hero-badges-row">
+        <ion-chip class="tag-chip">
+          <ion-icon name="code-slash-outline"></ion-icon>
+          <ion-label>Angular Standalone (Sin AppModule)</ion-label>
+        </ion-chip>
+        <ion-chip class="tag-chip">
+          <ion-icon name="layers-outline"></ion-icon>
+          <ion-label>Ionic 8+ / Web Components</ion-label>
+        </ion-chip>
+        <ion-chip class="tag-chip">
+          <ion-icon name="globe-outline"></ion-icon>
+          <ion-label>Google Books API</ion-label>
+        </ion-chip>
+        <ion-chip class="tag-chip">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <ion-label>TypeScript Strict</ion-label>
+        </ion-chip>
+      </div>
+    </section>
+
+    <!-- Tarjeta Destacada de GitHub -->
+    <section class="github-featured-section">
+      <ion-card class="github-card">
+        <ion-card-content class="github-card-inner">
+          <div class="github-icon-box">
+            <ion-icon name="logo-github"></ion-icon>
+          </div>
+          <div class="github-text-content">
+            <div class="github-header-sub">
+              <ion-badge color="tertiary" class="github-badge">Repositorio & Perfil Oficial</ion-badge>
+              <span class="github-user-tag">&#64;thepimen</span>
+            </div>
+            <h2 class="github-title">Proyectos de Código Abierto y Soluciones DAM2</h2>
+            <p class="github-description">
+              Explora nuestros repositorios con arquitecturas de producción, proyectos de desarrollo de interfaces,
+              servicios reactivos en Angular y aplicaciones listas para despliegue en Vercel.
+            </p>
+          </div>
+          <div class="github-cta-box">
+            <a
+              [href]="githubProfileUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="github-external-button">
+              <ion-icon name="logo-github"></ion-icon>
+              <span>Visitar GitHub</span>
+              <ion-icon name="open-outline" class="external-icon"></ion-icon>
+            </a>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </section>
+
+    <!-- Métricas Corporativas -->
+    <section class="metrics-grid-section">
+      <div class="metrics-grid">
+        @for (metric of metrics; track metric.label) {
+          <div class="metric-card">
+            <span class="metric-number">{{ metric.value }}</span>
+            <strong class="metric-title">{{ metric.label }}</strong>
+            <p class="metric-caption">{{ metric.caption }}</p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Especialidades y Competencias Técnicas -->
+    <section class="competencies-section">
+      <div class="section-heading">
+        <h2 class="section-title">Pilares de Excelencia Técnica</h2>
+        <p class="section-subtitle">Estándares arquitectónicos aplicados en el diseño y construcción de este sistema.</p>
+      </div>
+
+      <div class="competencies-grid">
+        @for (item of competencies; track item.title) {
+          <ion-card class="competency-card">
+            <ion-card-header>
+              <div class="comp-icon-box" [style.background-color]="item.color + '18'" [style.color]="item.color">
+                <ion-icon [name]="item.icon"></ion-icon>
+              </div>
+              <ion-card-title class="comp-title">{{ item.title }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <p class="comp-description">{{ item.description }}</p>
+            </ion-card-content>
+          </ion-card>
+        }
+      </div>
+    </section>
+
+    <!-- Sección de Retorno y Acciones Finales -->
+    <section class="action-footer-section">
+      <div class="action-footer-card">
+        <div class="footer-prompt">
+          <h3>¿Deseas explorar el catálogo de productos y el stock valorado?</h3>
+          <p>Comprueba en tiempo real el cálculo de métricas económicas y dimensiones físicas.</p>
+        </div>
+        <div class="footer-actions">
+          <ion-button routerLink="/inicio" shape="round" color="primary" class="footer-btn">
+            <ion-icon slot="start" name="home-outline"></ion-icon>
+            Regresar a Inicio
+          </ion-button>
+          <ion-button routerLink="/productos" shape="round" fill="outline" color="light" class="footer-btn">
+            <ion-icon slot="start" name="library-outline"></ion-icon>
+            Ir al Catálogo de Productos
+            <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</ion-content>
