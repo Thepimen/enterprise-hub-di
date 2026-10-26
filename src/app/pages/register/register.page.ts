@@ -416,7 +416,7 @@ function uniqueEmailValidator(sqlService: SqlMockService): AsyncValidatorFn {
     .primary-submit-btn {
       width: 100%;
       height: 40px;
-      background: #0f172a;
+      background: var(--btn-primary-bg);
       color: #ffffff;
       border: 1px solid #0f172a;
       border-radius: 6px;
@@ -518,8 +518,8 @@ export class RegisterPage implements OnInit {
     this.authService.register({ name, email, password, confirmPassword }).subscribe({
       next: (res) => {
         this.isLoading = false;
-        this.notif.success(`¡Cuenta creada! Bienvenido, ${res.user.name}`);
-        this.router.navigate(['/tickets']);
+        this.notif.success(`¡Cuenta creada! Bienvenido, ${res.user.username}`);
+        this.router.navigate(['/user-dashboard']);
       },
       error: () => {
         this.isLoading = false;

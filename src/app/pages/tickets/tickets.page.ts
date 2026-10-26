@@ -297,9 +297,9 @@ addIcons({
       gap: 6px;
       padding: 6px 12px;
       border-radius: 6px;
-      background: #0f172a;
+      background: var(--btn-primary-bg);
       color: #ffffff;
-      border: 1px solid #0f172a;
+      border: 1px solid var(--btn-primary-border);
       font-size: 0.8125rem;
       font-weight: 500;
       cursor: pointer;
@@ -452,9 +452,9 @@ addIcons({
     .modal-btn-submit {
       padding: 8px 16px;
       border-radius: 6px;
-      background: #0f172a;
+      background: var(--btn-primary-bg);
       color: #ffffff;
-      border: 1px solid #0f172a;
+      border: 1px solid var(--btn-primary-border);
       font-size: 0.8125rem;
       font-weight: 500;
       cursor: pointer;
@@ -545,7 +545,7 @@ export class TicketsPage implements OnInit, OnDestroy {
     this.isSaving = true;
 
     const payload: CreateTicketPayload = this.ticketForm.value;
-    const author = this.authService.currentUser?.name ?? 'Usuario';
+    const author = this.authService.currentUser()?.username ?? 'Usuario';
 
     this.sqlService.createTicket(payload, author)
       .pipe(takeUntil(this.destroy$))
