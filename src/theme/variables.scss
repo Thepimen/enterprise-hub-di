@@ -1,28 +1,129 @@
 /**
  * @file variables.scss
- * @description Sistema de diseño global con variables CSS verificadas para WCAG 2.1 AA/AAA.
- * Refactorizado con arquitectura B2B Enterprise (Taste Skill + soporte dual Claro/Oscuro):
- * - Tokens explícitos para botones primarios/secundarios (evitando colisiones blanco-sobre-blanco)
- * - Estados de navegación activa de alto contraste en modo claro y oscuro
- * - Tipografía con soporte tabular para telemetría y métricas
+ * @description Sistema de tokens de diseño para EnterpriseHub NOC Command Center.
+ * Soporta conmutación en vivo entre Modo Oscuro NOC (por defecto) y Modo Claro Editorial
+ * mediante el atributo [data-theme="light"] o [data-theme="dark"] en <html>.
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root,
+:root[data-theme="dark"] {
+  /* Paleta NOC Command Center (Modo Oscuro Profesional por defecto) */
+  --color-primary:       #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #60a5fa;
+  --color-primary-rgb:   59, 130, 246;
+  --color-accent:        #06b6d4;   /* Cyan 500 */
+  --color-emerald:       #10b981;   /* Emerald 500 */
+  --color-violet:        #8b5cf6;   /* Violet 500 */
+
+  /* Botones Semánticos (Contraste AAA garantizado) */
+  --btn-primary-bg:        linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+  --btn-primary-solid:     #2563eb;
+  --btn-primary-bg-hover:  linear-gradient(135deg, #1d4ed8 0%, #0369a1 100%);
+  --btn-primary-text:      #ffffff;
+  --btn-primary-border:    #38bdf8;
+
+  --btn-secondary-bg:       #131c2e;
+  --btn-secondary-bg-hover: #1e293b;
+  --btn-secondary-text:     #f1f5f9;
+  --btn-secondary-border:   #26354d;
+
+  /* Navegación activa */
+  --nav-active-bg:     rgba(6, 182, 212, 0.14);
+  --nav-active-text:   #22d3ee;
+  --nav-active-border: #06b6d4;
+
+  /* Badges de Rol con estética técnica nítida */
+  --badge-admin-bg:     rgba(37, 99, 235, 0.22);
+  --badge-admin-text:   #93c5fd;
+  --badge-admin-border: rgba(96, 165, 250, 0.5);
+
+  --badge-user-bg:      rgba(16, 185, 129, 0.22);
+  --badge-user-text:    #6ee7b7;
+  --badge-user-border:  rgba(52, 211, 153, 0.5);
+
+  /* Estados semánticos */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger:  #ef4444;
+  --color-info:    #06b6d4;
+
+  /* Superficies NOC Obsidian */
+  --surface-ground:    #060a12;   /* Obsidian canvas */
+  --surface-card:      #0d1424;   /* Panel navy-slate */
+  --surface-elevated:  #152036;   /* Interactive surface */
+  --surface-glass:     rgba(13, 20, 36, 0.92);
+  --surface-overlay:   rgba(6, 10, 18, 0.85);
+
+  /* Texto */
+  --color-text-primary:   #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-disabled:  #64748b;
+
+  /* Bordes técnicos de 1px */
+  --color-border:        #1e293b;
+  --color-border-strong: #2dd4bf33;
+  --color-border-subtle: #111a2e;
+  --color-hover:         #1a2742;
+
+  /* Sombras */
+  --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-md:  0 8px 20px rgba(0, 0, 0, 0.45);
+  --shadow-lg:  0 16px 36px rgba(0, 0, 0, 0.65);
+
+  /* Ionic Custom Properties */
+  --ion-color-primary:           #2563eb;
+  --ion-color-primary-rgb:       37, 99, 235;
+  --ion-color-primary-contrast:  #ffffff;
+  --ion-color-primary-shade:     #1d4ed8;
+  --ion-color-primary-tint:      #3b82f6;
+
+  --ion-color-secondary:         #06b6d4;
+  --ion-color-secondary-contrast: #ffffff;
+
+  --ion-color-success:  #10b981;
+  --ion-color-warning:  #f59e0b;
+  --ion-color-danger:   #ef4444;
+
+  --ion-background-color:      var(--surface-ground);
+  --ion-background-color-rgb:  6, 10, 18;
+  --ion-text-color:            var(--color-text-primary);
+  --ion-text-color-rgb:        248, 250, 252;
+  --ion-border-color:          var(--color-border);
+  --ion-toolbar-background:    var(--surface-card);
+  --ion-toolbar-color:         var(--color-text-primary);
+  --ion-item-background:       var(--surface-card);
+  --ion-card-background:       var(--surface-card);
+
+  /* Tipografía */
+  --font-sans:    'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+}
+
 /* ==========================================
-   IMPORTACIÓN DE FUENTES GOOGLE
+   MODO CLARO EDITORIAL (Activado con [data-theme="light"])
    ========================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-:root {
-  /* Paleta corporativa principal (Siempre contraste legible con texto blanco) */
-  --color-primary:       #2563eb;   /* Blue 600 */
-  --color-primary-hover: #1d4ed8;   /* Blue 700 */
-  --color-accent:        #2563eb;   /* Blue 600 */
-  --color-primary-light: #3b82f6;   /* Blue 500 */
+:root[data-theme="light"] {
+  --color-primary:       #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #2563eb;
   --color-primary-rgb:   37, 99, 235;
+  --color-accent:        #0284c7;
+  --color-emerald:       #059669;
+  --color-violet:        #7c3aed;
 
-  /* Botones semánticos (Garantizan legibilidad 100% en cualquier tema) */
-  --btn-primary-bg:        #2563eb;
-  --btn-primary-bg-hover:  #1d4ed8;
+  --btn-primary-bg:        linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+  --btn-primary-solid:     #2563eb;
+  --btn-primary-bg-hover:  linear-gradient(135deg, #1d4ed8 0%, #0369a1 100%);
   --btn-primary-text:      #ffffff;
   --btn-primary-border:    #1d4ed8;
 
@@ -31,178 +132,44 @@
   --btn-secondary-text:     #0f172a;
   --btn-secondary-border:   #cbd5e1;
 
-  /* Estado activo del menú desplegable lateral */
   --nav-active-bg:     #eff6ff;
   --nav-active-text:   #1d4ed8;
   --nav-active-border: #2563eb;
 
-  /* Badges de rol */
-  --badge-admin-bg:     #eff6ff;
-  --badge-admin-text:   #1d4ed8;
-  --badge-admin-border: #bfdbfe;
+  --badge-admin-bg:     #dbeafe;
+  --badge-admin-text:   #1e40af;
+  --badge-admin-border: #93c5fd;
 
-  --badge-user-bg:      #ecfdf5;
-  --badge-user-text:    #047857;
-  --badge-user-border:  #a7f3d0;
+  --badge-user-bg:      #d1fae5;
+  --badge-user-text:    #065f46;
+  --badge-user-border:  #6ee7b7;
 
-  /* Colores de estado semánticos (WCAG AA probado) */
-  --color-success: #10b981;   /* Emerald 500 */
-  --color-warning: #f59e0b;   /* Amber 500 */
-  --color-danger:  #ef4444;   /* Red 500 */
-  --color-info:    #3b82f6;   /* Blue 500 */
+  --surface-ground:    #f1f5f9;
+  --surface-card:      #ffffff;
+  --surface-elevated:  #f8fafc;
+  --surface-glass:     rgba(255, 255, 255, 0.95);
+  --surface-overlay:   rgba(15, 23, 42, 0.45);
 
-  /* Superficies Modo Claro */
-  --surface-ground:    #f8fafc;   /* Slate 50 */
-  --surface-card:      #ffffff;   /* Pure white */
-  --surface-elevated:  #f1f5f9;   /* Slate 100 */
-  --surface-overlay:   rgba(255, 255, 255, 0.98);
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-disabled:  #94a3b8;
 
-  /* Texto */
-  --color-text-primary:   #0f172a;   /* Slate 900 */
-  --color-text-secondary: #475569;   /* Slate 600 */
-  --color-text-disabled:  #94a3b8;   /* Slate 400 */
+  --color-border:        #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-border-subtle: #f1f5f9;
+  --color-hover:         #f1f5f9;
 
-  /* Bordes de regla de 1px */
-  --color-border:        #e2e8f0;   /* Slate 200 */
-  --color-border-strong: #cbd5e1;   /* Slate 300 */
-  --color-border-subtle: #f1f5f9;   /* Slate 100 */
-  --color-hover:         #f1f5f9;   /* Slate 100 */
+  --shadow-sm:  0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md:  0 6px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg:  0 16px 32px rgba(15, 23, 42, 0.14);
 
-  /* Sombras sobrias */
-  --shadow-sm:  0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-md:  0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg:  0 10px 25px rgba(15, 23, 42, 0.12);
-  --shadow-xl:  0 16px 36px rgba(15, 23, 42, 0.16);
-
-  /* ==========================================
-     IONIC CUSTOM PROPERTIES
-     ========================================== */
-  --ion-color-primary:           #2563eb;
-  --ion-color-primary-rgb:       37, 99, 235;
-  --ion-color-primary-contrast:  #ffffff;
-  --ion-color-primary-shade:     #1d4ed8;
-  --ion-color-primary-tint:      #3b82f6;
-
-  --ion-color-secondary:         #0ea5e9;
-  --ion-color-secondary-contrast: #ffffff;
-
-  --ion-color-success:  #10b981;
-  --ion-color-warning:  #f59e0b;
-  --ion-color-danger:   #ef4444;
-
-  --ion-background-color:         var(--surface-ground);
-  --ion-background-color-rgb:     248, 250, 252;
-  --ion-text-color:               var(--color-text-primary);
-  --ion-text-color-rgb:           15, 23, 42;
-  --ion-border-color:             var(--color-border);
-  --ion-toolbar-background:       var(--surface-card);
-  --ion-toolbar-color:            var(--color-text-primary);
-  --ion-item-background:          var(--surface-card);
-  --ion-card-background:          var(--surface-card);
-  --ion-tab-bar-background:       var(--surface-card);
-
-  /* ==========================================
-     TIPOGRAFÍA
-     ========================================== */
-  --font-sans:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-  --font-size-xs:   0.75rem;
-  --font-size-sm:   0.8125rem;
-  --font-size-base: 0.875rem;
-  --font-size-lg:   1rem;
-  --font-size-xl:   1.125rem;
-  --font-size-2xl:  1.375rem;
-  --font-size-3xl:  1.625rem;
-  --font-size-4xl:  2rem;
-
-  /* ==========================================
-     ESPACIADO Y RADIOS
-     ========================================== */
-  --radius-sm:   4px;
-  --radius-md:   6px;
-  --radius-lg:   8px;
-  --radius-xl:   10px;
-  --radius-full: 9999px;
-
-  /* ==========================================
-     TRANSICIONES
-     ========================================== */
-  --transition-fast:   0.12s ease;
-  --transition-normal: 0.2s ease;
-  --transition-slow:   0.3s ease;
-}
-
-/* ==========================================
-   MODO OSCURO (Contraste verificado sin botones blancos invisibles)
-   ========================================== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary:       #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-primary-rgb:   59, 130, 246;
-    --color-accent:        #38bdf8;
-    --color-primary-light: #60a5fa;
-
-    /* Botones semánticos en modo oscuro: Azul corporativo con texto blanco nítido */
-    --btn-primary-bg:        #2563eb;
-    --btn-primary-bg-hover:  #3b82f6;
-    --btn-primary-text:      #ffffff;
-    --btn-primary-border:    #3b82f6;
-
-    --btn-secondary-bg:       #1e293b;
-    --btn-secondary-bg-hover: #334155;
-    --btn-secondary-text:     #f8fafc;
-    --btn-secondary-border:   #334155;
-
-    /* Estado activo del menú en modo oscuro: Píldora azul translúcida con texto azul brillante */
-    --nav-active-bg:     rgba(59, 130, 246, 0.16);
-    --nav-active-text:   #60a5fa;
-    --nav-active-border: #3b82f6;
-
-    /* Badges de rol en modo oscuro */
-    --badge-admin-bg:     rgba(37, 99, 235, 0.2);
-    --badge-admin-text:   #93c5fd;
-    --badge-admin-border: rgba(59, 130, 246, 0.45);
-
-    --badge-user-bg:      rgba(16, 185, 129, 0.2);
-    --badge-user-text:    #6ee7b7;
-    --badge-user-border:  rgba(16, 185, 129, 0.45);
-
-    --surface-ground:    #0b0f19;   /* Deep slate canvas */
-    --surface-card:      #111827;   /* Slate 900 card */
-    --surface-elevated:  #1e293b;   /* Slate 800 elevated */
-    --surface-overlay:   rgba(17, 24, 39, 0.98);
-
-    --color-text-primary:   #f8fafc;
-    --color-text-secondary: #94a3b8;
-    --color-text-disabled:  #64748b;
-
-    --color-border:        #1e293b;   /* Slate 800 */
-    --color-border-strong: #334155;   /* Slate 700 */
-    --color-border-subtle: #111827;
-    --color-hover:         #1e293b;
-
-    --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.35);
-    --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.45);
-    --shadow-lg:  0 10px 25px rgba(0, 0, 0, 0.55);
-
-    /* Ionic dark mode overrides */
-    --ion-color-primary:          #2563eb;
-    --ion-color-primary-rgb:      37, 99, 235;
-    --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-shade:    #1d4ed8;
-    --ion-color-primary-tint:     #3b82f6;
-
-    --ion-background-color:      var(--surface-ground);
-    --ion-background-color-rgb:  11, 15, 25;
-    --ion-text-color:            var(--color-text-primary);
-    --ion-text-color-rgb:        248, 250, 252;
-    --ion-border-color:          var(--color-border);
-    --ion-toolbar-background:    var(--surface-card);
-    --ion-toolbar-color:         var(--color-text-primary);
-    --ion-item-background:       var(--surface-card);
-    --ion-card-background:       var(--surface-card);
-  }
+  --ion-background-color:      var(--surface-ground);
+  --ion-background-color-rgb:  241, 245, 249;
+  --ion-text-color:            var(--color-text-primary);
+  --ion-text-color-rgb:        15, 23, 42;
+  --ion-border-color:          var(--color-border);
+  --ion-toolbar-background:    var(--surface-card);
+  --ion-toolbar-color:         var(--color-text-primary);
+  --ion-item-background:       var(--surface-card);
+  --ion-card-background:       var(--surface-card);
 }

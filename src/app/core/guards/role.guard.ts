@@ -8,7 +8,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 export const roleGuard = (allowedRole: 'admin' | 'user'): CanActivateFn => {
-  return (_route, _state) => {
+  return (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
@@ -19,11 +19,20 @@ export const roleGuard = (allowedRole: 'admin' | 'user'): CanActivateFn => {
     const session = authService.currentUser();
 
     if (session?.role === allowedRole) {
+      authService.recordAudit(
+        'GUARD',
+        'SUCCESS',
+        `roleGuard('${allowedRole}'): Acceso autorizado a '${state.url}' para usuario '${session.username}'`
+      );
       return true;
     }
 
-    // Si un usuario 'user' intenta acceder a ruta de 'admin', redirige atómicamente a '/user-dashboard'
-    // Si un 'admin' intenta acceder a ruta exclusiva de 'user', redirige a '/admin'
+    authService.recordAudit(
+      'GUARD',
+      'WARN',
+      `roleGuard('${allowedRole}'): Acceso DENEGADO a '${state.url}' para rol '${session?.role}'. Redirección atómica UrlTree aplicada.`
+    );
+
     if (session?.role === 'admin') {
       return router.createUrlTree(['/admin']);
     }

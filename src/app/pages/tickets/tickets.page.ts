@@ -1,10 +1,9 @@
 /**
  * @file tickets.page.ts
- * @description Página de gestión de tickets accesible para ADMIN y USER.
- * Refactorizado según las directrices de Taste Skill:
- * - Sin emojis en opciones de selección ("tells.md")
- * - Contadores de estado tipográficos planos con borde de 1px
- * - Tabla desacoplada con encabezados de regla y acciones funcionales
+ * @description Centro de Incidencias (TicketsPage) accesible para ADMIN y USER.
+ * - Único botón de menú lateral en cabecera (sin duplicados).
+ * - Píldoras de filtro interactivo por estado y prioridad.
+ * - Tabla desacoplada OnPush con acciones funcionales.
  */
 import {
   Component, OnInit, OnDestroy, inject,
@@ -16,17 +15,17 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-  IonMenuButton, IonButton, IonIcon, IonSpinner, IonModal,
+  IonButton, IonIcon, IonSpinner, IonModal,
   IonInput, IonSelect, IonSelectOption, IonTextarea,
   IonGrid, IonRow, IonCol,
-  IonRefresher, IonRefresherContent, IonFab, IonFabButton
+  IonRefresher, IonRefresherContent, IonFab, IonFabButton, MenuController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   addOutline, closeOutline, ticketOutline, refreshOutline,
   eyeOutline, createOutline, funnelOutline, menuOutline,
   filterOutline, checkmarkCircleOutline, alertCircleOutline,
-  timeOutline, lockClosedOutline, chevronDownOutline
+  timeOutline, lockClosedOutline, chevronDownOutline, sunnyOutline, moonOutline
 } from 'ionicons/icons';
 import { SqlMockService } from '../../core/services/sql-mock.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -38,7 +37,7 @@ addIcons({
   addOutline, closeOutline, ticketOutline, refreshOutline,
   eyeOutline, createOutline, funnelOutline, menuOutline,
   filterOutline, checkmarkCircleOutline, alertCircleOutline,
-  timeOutline, lockClosedOutline, chevronDownOutline
+  timeOutline, lockClosedOutline, chevronDownOutline, sunnyOutline, moonOutline
 });
 
 @Component({
@@ -48,24 +47,41 @@ addIcons({
   imports: [
     CommonModule, ReactiveFormsModule, DataTableComponent,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-    IonMenuButton, IonButton, IonIcon, IonSpinner, IonModal,
+    IonButton, IonIcon, IonSpinner, IonModal,
     IonInput, IonSelect, IonSelectOption, IonTextarea,
     IonGrid, IonRow, IonCol,
     IonRefresher, IonRefresherContent, IonFab, IonFabButton,
   ],
   template: `
-    <ion-header [translucent]="true">
+    <ion-header [translucent]="false">
       <ion-toolbar class="tickets-toolbar">
         <ion-buttons slot="start">
-          <ion-menu-button aria-label="Abrir menú de navegación"></ion-menu-button>
+          <!-- ÚNICO BOTÓN DE MENÚ -->
+          <button
+            type="button"
+            class="single-menu-btn"
+            (click)="toggleDrawer()"
+            aria-label="Abrir menú de navegación"
+          >
+            <ion-icon name="menu-outline"></ion-icon>
+            <span>Menú</span>
+          </button>
         </ion-buttons>
         <ion-title>
           <span class="toolbar-title">
             <span class="toolbar-brand-dot"></span>
-            Tickets Técnicos
+            <span>Centro de Incidencias Técnicas</span>
           </span>
         </ion-title>
         <ion-buttons slot="end">
+          <button
+            type="button"
+            class="theme-chip-btn"
+            (click)="authService.toggleTheme()"
+            title="Alternar tema Oscuro / Claro"
+          >
+            <ion-icon [name]="authService.theme() === 'dark' ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+          </button>
           <ion-button
             (click)="loadTickets()"
             fill="clear"
@@ -94,34 +110,47 @@ addIcons({
 
       <main class="tickets-main" id="main-content" role="main">
 
-        <!-- Cabecera con estadísticas tipográficas (Taste Skill) -->
         <header class="tickets-header" aria-label="Estadísticas de tickets">
           <div>
             <div class="header-breadcrumbs">
-              <span class="bc-root">Soporte</span>
+              <span class="bc-root">Operaciones SRE</span>
               <span class="bc-sep">/</span>
-              <span class="bc-current">Gestión de Incidencias</span>
+              <span class="bc-current">Gestión de Incidencias ({{ authService.currentUser()?.username }} · {{ authService.currentUser()?.role | uppercase }})</span>
             </div>
-            <h1 class="tickets-title">Centro de Incidencias</h1>
-            <p class="tickets-subtitle">Seguimiento de incidencias de infraestructura y peticiones de servicio</p>
+            <h1 class="tickets-title">Centro de Incidencias & SLA</h1>
+            <p class="tickets-subtitle">Haz clic en cualquier píldora de estado para filtrar instantáneamente la tabla</p>
           </div>
 
-          <div class="ticket-stats" role="group" aria-label="Resumen de estado de tickets">
-            <div *ngFor="let stat of stats" class="stat-pill" [attr.aria-label]="stat.label + ': ' + stat.count">
+          <div class="ticket-stats" role="group" aria-label="Filtros por estado de tickets">
+            <button
+              type="button"
+              class="stat-pill"
+              [class.active]="activeStatusFilter === 'ALL'"
+              (click)="applyFilter('ALL')"
+            >
+              <span class="stat-label">Todos</span>
+              <span class="stat-count">{{ allTickets.length }}</span>
+            </button>
+            <button
+              *ngFor="let stat of stats"
+              type="button"
+              class="stat-pill"
+              [class.active]="activeStatusFilter === stat.key"
+              (click)="applyFilter(stat.key)"
+              [attr.aria-label]="stat.label + ': ' + stat.count"
+            >
               <span class="stat-indicator" [class]="'ind--' + stat.color" aria-hidden="true"></span>
               <span class="stat-label">{{ stat.label }}</span>
               <span class="stat-count">{{ stat.count }}</span>
-            </div>
+            </button>
           </div>
         </header>
 
-        <!-- Loading -->
         <div *ngIf="isLoading" class="loading-block" role="status" aria-live="polite">
           <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
           <span>Consultando repositorio de incidencias...</span>
         </div>
 
-        <!-- DataTable reutilizable -->
         <section *ngIf="!isLoading" aria-label="Tabla de tickets técnicos">
           <app-data-table
             [data]="tickets"
@@ -136,7 +165,6 @@ addIcons({
         </section>
       </main>
 
-      <!-- FAB para crear ticket en mobile -->
       <ion-fab slot="fixed" vertical="bottom" horizontal="end" aria-label="Crear nuevo ticket">
         <ion-fab-button (click)="openModal()" color="primary" aria-label="Abrir formulario de nuevo ticket">
           <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
@@ -144,7 +172,6 @@ addIcons({
       </ion-fab>
     </ion-content>
 
-    <!-- Modal: Nuevo Ticket -->
     <ion-modal
       [isOpen]="isModalOpen"
       (didDismiss)="closeModal()"
@@ -166,8 +193,6 @@ addIcons({
 
         <ion-content class="modal-content">
           <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" novalidate class="ticket-form">
-
-            <!-- Título -->
             <div class="form-field">
               <label for="tkt-title" class="form-label">Título de la incidencia *</label>
               <ion-input
@@ -181,7 +206,6 @@ addIcons({
               <p *ngIf="isInvalid('title')" role="alert" class="form-error">El título es obligatorio (mínimo 5 caracteres).</p>
             </div>
 
-            <!-- Descripción -->
             <div class="form-field">
               <label for="tkt-desc" class="form-label">Detalle técnico *</label>
               <ion-textarea
@@ -198,7 +222,6 @@ addIcons({
               </p>
             </div>
 
-            <!-- Prioridad y Categoría (Sin emojis: Taste Skill tells.md) -->
             <ion-grid class="form-grid">
               <ion-row>
                 <ion-col size="12" size-sm="6">
@@ -217,7 +240,6 @@ addIcons({
                       <ion-select-option value="HIGH">Alta (Degradación de servicio)</ion-select-option>
                       <ion-select-option value="CRITICAL">Crítica (Interrupción total)</ion-select-option>
                     </ion-select>
-                    <p *ngIf="isInvalid('priority')" role="alert" class="form-error">Selecciona una prioridad.</p>
                   </div>
                 </ion-col>
                 <ion-col size="12" size-sm="6">
@@ -237,28 +259,14 @@ addIcons({
                       <ion-select-option value="SECURITY">Ciberseguridad & Acceso</ion-select-option>
                       <ion-select-option value="OTHER">General & Otras peticiones</ion-select-option>
                     </ion-select>
-                    <p *ngIf="isInvalid('category')" role="alert" class="form-error">Selecciona una categoría.</p>
                   </div>
                 </ion-col>
               </ion-row>
             </ion-grid>
 
-            <!-- Botones de acción -->
             <div class="form-actions">
-              <button
-                type="button"
-                class="modal-btn-cancel"
-                (click)="closeModal()"
-                aria-label="Cancelar creación de ticket"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                class="modal-btn-submit"
-                [disabled]="ticketForm.invalid || isSaving"
-                aria-label="Guardar nuevo ticket"
-              >
+              <button type="button" class="modal-btn-cancel" (click)="closeModal()">Cancelar</button>
+              <button type="submit" class="modal-btn-submit" [disabled]="ticketForm.invalid || isSaving">
                 <ion-spinner *ngIf="isSaving" name="crescent" aria-hidden="true"></ion-spinner>
                 <span *ngIf="!isSaving">Crear Ticket</span>
               </button>
@@ -271,22 +279,53 @@ addIcons({
   styles: [`
     .tickets-toolbar {
       --background: var(--surface-card);
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border-strong);
+      padding: 0 12px;
+      min-height: 60px;
+    }
+    .single-menu-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 8px;
+      background: var(--surface-elevated);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border-strong);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .single-menu-btn ion-icon {
+      font-size: 1.15rem;
+      color: var(--color-primary-light);
     }
     .toolbar-title {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.9375rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 800;
       color: var(--color-text-primary);
-      letter-spacing: -0.01em;
     }
     .toolbar-brand-dot {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background: var(--color-accent);
+      background: var(--color-primary-light);
+    }
+    .theme-chip-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--surface-elevated);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border-strong);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
     }
     .header-action-btn {
       --color: var(--color-text-secondary);
@@ -295,23 +334,22 @@ addIcons({
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      border-radius: 6px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
       background: var(--btn-primary-bg);
       color: #ffffff;
       border: 1px solid var(--btn-primary-border);
       font-size: 0.8125rem;
-      font-weight: 500;
+      font-weight: 700;
       cursor: pointer;
-      margin-right: 8px;
-      transition: background-color 0.12s;
+      margin-right: 4px;
     }
-    .primary-create-btn:hover { background: #1e293b; }
 
     .tickets-main {
-      max-width: 1360px;
+      max-width: 1380px;
       margin: 0 auto;
-      padding: 24px 20px 48px;
+      padding: 24px 20px 56px;
     }
     .tickets-header {
       display: flex;
@@ -332,21 +370,19 @@ addIcons({
       margin-bottom: 4px;
     }
     .bc-sep { color: var(--color-text-disabled); }
-    .bc-current { color: var(--color-text-primary); font-weight: 500; }
+    .bc-current { color: var(--color-primary-light); font-weight: 700; }
     .tickets-title {
       font-size: 1.5rem;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--color-text-primary);
       margin: 0 0 4px;
-      letter-spacing: -0.02em;
     }
     .tickets-subtitle {
-      font-size: 0.8125rem;
+      font-size: 0.82rem;
       color: var(--color-text-secondary);
       margin: 0;
     }
 
-    /* Resumen de estados tipográfico (Taste Skill) */
     .ticket-stats {
       display: flex;
       flex-wrap: wrap;
@@ -357,28 +393,40 @@ addIcons({
       align-items: center;
       gap: 8px;
       background: var(--surface-card);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      padding: 6px 12px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 999px;
+      padding: 7px 14px;
+      cursor: pointer;
+      color: var(--color-text-primary);
+    }
+    .stat-pill.active {
+      background: var(--btn-primary-bg);
+      border-color: var(--btn-primary-border);
+      color: #ffffff;
+    }
+    .stat-pill.active .stat-label,
+    .stat-pill.active .stat-count {
+      color: #ffffff;
     }
     .stat-indicator {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
     }
-    .ind--red    { background: #dc2626; }
-    .ind--orange { background: #d97706; }
-    .ind--green  { background: #059669; }
+    .ind--red    { background: #ef4444; }
+    .ind--orange { background: #f59e0b; }
+    .ind--green  { background: #10b981; }
     .ind--gray   { background: #64748b; }
     .stat-label {
       font-size: 0.75rem;
+      font-weight: 600;
       color: var(--color-text-secondary);
     }
     .stat-count {
-      font-size: 0.8125rem;
-      font-weight: 600;
+      font-size: 0.82rem;
+      font-weight: 800;
       color: var(--color-text-primary);
-      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono);
     }
 
     .loading-block {
@@ -388,10 +436,8 @@ addIcons({
       gap: 10px;
       padding: 48px;
       color: var(--color-text-secondary);
-      font-size: 0.875rem;
     }
 
-    /* Modal Form */
     .modal-toolbar {
       --background: var(--surface-card);
       border-bottom: 1px solid var(--color-border);
@@ -405,33 +451,29 @@ addIcons({
     .form-field { margin-bottom: 16px; }
     .form-label {
       display: block;
-      font-size: 0.78125rem;
-      font-weight: 500;
+      font-size: 0.78rem;
+      font-weight: 700;
       color: var(--color-text-primary);
       margin-bottom: 5px;
     }
     .modal-input {
-      --border-radius: 6px;
-      --border-color: var(--color-border);
-      --background: var(--surface-card);
+      --border-radius: 8px;
+      --background: var(--surface-elevated);
       --color: var(--color-text-primary);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
       font-size: 0.875rem;
       min-height: 40px;
     }
-    .modal-input:focus-within { border-color: #0f172a; }
     .modal-textarea { min-height: 90px; }
     .modal-select {
-      --border-radius: 6px;
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      background: var(--surface-card);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      background: var(--surface-elevated);
       font-size: 0.875rem;
     }
     .form-grid { padding: 0; }
-    .form-error { color: #dc2626; font-size: 0.75rem; margin: 4px 0 0; }
-
+    .form-error { color: #ef4444; font-size: 0.75rem; margin: 4px 0 0; }
     .form-actions {
       display: flex;
       gap: 8px;
@@ -442,40 +484,43 @@ addIcons({
     }
     .modal-btn-cancel {
       padding: 8px 14px;
-      border-radius: 6px;
-      background: transparent;
-      border: 1px solid var(--color-border);
-      color: var(--color-text-secondary);
+      border-radius: 8px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--color-border-strong);
+      color: var(--color-text-primary);
       font-size: 0.8125rem;
+      font-weight: 600;
       cursor: pointer;
     }
     .modal-btn-submit {
       padding: 8px 16px;
-      border-radius: 6px;
+      border-radius: 8px;
       background: var(--btn-primary-bg);
       color: #ffffff;
       border: 1px solid var(--btn-primary-border);
       font-size: 0.8125rem;
-      font-weight: 500;
+      font-weight: 700;
       cursor: pointer;
     }
-    .modal-btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
   `]
 })
 export class TicketsPage implements OnInit, OnDestroy {
   private readonly sqlService = inject(SqlMockService);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly notif = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly menuCtrl = inject(MenuController);
   private readonly destroy$ = new Subject<void>();
 
+  allTickets: Ticket[] = [];
   tickets: Record<string, unknown>[] = [];
+  activeStatusFilter = 'ALL';
   isLoading = false;
   isModalOpen = false;
   isSaving = false;
   ticketForm!: FormGroup;
-  stats: { label: string; count: number; color: string }[] = [];
+  stats: { key: string; label: string; count: number; color: string }[] = [];
 
   readonly columns: TableColumn[] = [
     { key: 'id',       label: 'ID',       sortable: false },
@@ -501,6 +546,10 @@ export class TicketsPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  async toggleDrawer(): Promise<void> {
+    await this.menuCtrl.toggle('main-menu');
+  }
+
   loadTickets(): void {
     this.isLoading = true;
     this.cdr.markForCheck();
@@ -509,8 +558,9 @@ export class TicketsPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          this.tickets = data as unknown as Record<string, unknown>[];
+          this.allTickets = data;
           this.computeStats(data);
+          this.applyFilter(this.activeStatusFilter);
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -522,9 +572,18 @@ export class TicketsPage implements OnInit, OnDestroy {
       });
   }
 
+  applyFilter(statusKey: string): void {
+    this.activeStatusFilter = statusKey;
+    const filtered = statusKey === 'ALL'
+      ? this.allTickets
+      : this.allTickets.filter((t) => t.status === statusKey);
+    this.tickets = filtered as unknown as Record<string, unknown>[];
+    this.cdr.markForCheck();
+  }
+
   onRefresh(event: CustomEvent): void {
     this.loadTickets();
-    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 1000);
+    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 800);
   }
 
   openModal(): void {
@@ -593,10 +652,10 @@ export class TicketsPage implements OnInit, OnDestroy {
 
   private computeStats(tickets: Ticket[]): void {
     this.stats = [
-      { label: 'Abiertos',     count: tickets.filter((t) => t.status === 'OPEN').length,        color: 'red' },
-      { label: 'En progreso',  count: tickets.filter((t) => t.status === 'IN_PROGRESS').length, color: 'orange' },
-      { label: 'Resueltos',    count: tickets.filter((t) => t.status === 'RESOLVED').length,    color: 'green' },
-      { label: 'Cerrados',     count: tickets.filter((t) => t.status === 'CLOSED').length,      color: 'gray' },
+      { key: 'OPEN',        label: 'Abiertos',    count: tickets.filter((t) => t.status === 'OPEN').length,        color: 'red' },
+      { key: 'IN_PROGRESS', label: 'En progreso', count: tickets.filter((t) => t.status === 'IN_PROGRESS').length, color: 'orange' },
+      { key: 'RESOLVED',    label: 'Resueltos',   count: tickets.filter((t) => t.status === 'RESOLVED').length,    color: 'green' },
+      { key: 'CLOSED',      label: 'Cerrados',    count: tickets.filter((t) => t.status === 'CLOSED').length,      color: 'gray' },
     ];
   }
 }

@@ -1,31 +1,35 @@
 /**
  * @file app.component.ts
- * @description Componente raíz de EnterpriseHub PWA.
- * Incluye el menú lateral desplegable (overlay drawer con secciones colapsables)
- * sincronizado reactivamente con los Signals de AuthService.
+ * @description Componente raíz de EnterpriseHub NOC Command Center.
+ * Incluye:
+ * - Menú Lateral Desplegable (Overlay Drawer bajo demanda) con secciones acordeón
+ * - Conmutador en vivo de Tema (Oscuro NOC / Claro Editorial)
+ * - Enlaces directos al despliegue en producción (Vercel) y repositorios GitHub
+ * - Barra de navegación inferior adaptativa (Mobile Bottom Dock) para pantallas móviles
  */
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar,
-  IonContent, IonFooter, IonIcon, IonMenuToggle
+  IonContent, IonFooter, IonIcon, IonMenuToggle, MenuController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   serverOutline, shieldCheckmarkOutline, personOutline,
   statsChartOutline, ticketOutline, bookOutline, logOutOutline,
   chevronDownOutline, chevronForwardOutline, lockClosedOutline,
-  closeOutline, layersOutline, pulseOutline
+  closeOutline, layersOutline, pulseOutline, sunnyOutline,
+  moonOutline, globeOutline, logoGithub, openOutline, terminalOutline
 } from 'ionicons/icons';
-import { MenuController } from '@ionic/angular/standalone';
 import { AuthService } from './core/services/auth.service';
 
 addIcons({
   serverOutline, shieldCheckmarkOutline, personOutline,
   statsChartOutline, ticketOutline, bookOutline, logOutOutline,
   chevronDownOutline, chevronForwardOutline, lockClosedOutline,
-  closeOutline, layersOutline, pulseOutline
+  closeOutline, layersOutline, pulseOutline, sunnyOutline,
+  moonOutline, globeOutline, logoGithub, openOutline, terminalOutline
 });
 
 @Component({
@@ -51,11 +55,11 @@ addIcons({
             <div class="drawer-brand-row">
               <div class="drawer-brand">
                 <div class="brand-logo" aria-hidden="true">
-                  <ion-icon name="server-outline"></ion-icon>
+                  <ion-icon name="terminal-outline"></ion-icon>
                 </div>
                 <div class="brand-titles">
-                  <span class="brand-name">EnterpriseHub</span>
-                  <span class="brand-sub">RBAC &amp; Telemetry PWA</span>
+                  <span class="brand-name">EnterpriseHub <span class="brand-ver">v2.0</span></span>
+                  <span class="brand-sub">NOC &amp; RBAC Command Deck</span>
                 </div>
               </div>
               <ion-menu-toggle auto-hide="false">
@@ -74,12 +78,15 @@ addIcons({
               {{ session.username.slice(0, 2).toUpperCase() }}
             </div>
             <div class="session-meta">
-              <p class="session-user">{{ session.username }}</p>
+              <div class="session-user-row">
+                <p class="session-user">{{ session.username }}</p>
+                <span class="online-pip" title="Sesión activa"></span>
+              </div>
               <div class="session-badges">
                 <span class="role-pill" [class.role-pill--admin]="session.role === 'admin'" [class.role-pill--user]="session.role === 'user'">
-                  {{ session.role === 'admin' ? 'ROL: ADMIN' : 'ROL: USER' }}
+                  {{ session.role === 'admin' ? 'ADMIN PRIVILEGE' : 'OPERATOR L1' }}
                 </span>
-                <span class="storage-pill">sessionStorage</span>
+                <span class="storage-pill">DAM2_AUTH_SESSION</span>
               </div>
             </div>
           </div>
@@ -108,7 +115,7 @@ addIcons({
                 >
                   <ion-icon name="stats-chart-outline"></ion-icon>
                   <div class="drawer-link-text">
-                    <span class="link-title">Consola Admin</span>
+                    <span class="link-title">NOC Command Center</span>
                     <span class="link-caption">Protegido: roleGuard('admin')</span>
                   </div>
                 </a>
@@ -122,8 +129,8 @@ addIcons({
                 >
                   <ion-icon name="person-outline"></ion-icon>
                   <div class="drawer-link-text">
-                    <span class="link-title">Panel de Operador</span>
-                    <span class="link-caption">Vista UserDashboardPage</span>
+                    <span class="link-title">Workstation Operador</span>
+                    <span class="link-caption">Protegido: roleGuard('user')</span>
                   </div>
                 </a>
               </ion-menu-toggle>
@@ -146,20 +153,6 @@ addIcons({
             </button>
 
             <div class="nav-group-items" *ngIf="openSections().ops">
-              <ion-menu-toggle auto-hide="false" *ngIf="authService.currentUser()?.role === 'admin'">
-                <a
-                  routerLink="/dashboard"
-                  routerLinkActive="drawer-link--active"
-                  class="drawer-link"
-                >
-                  <ion-icon name="pulse-outline"></ion-icon>
-                  <div class="drawer-link-text">
-                    <span class="link-title">Telemetría Clúster</span>
-                    <span class="link-caption">Métricas en tiempo real</span>
-                  </div>
-                </a>
-              </ion-menu-toggle>
-
               <ion-menu-toggle auto-hide="false">
                 <a
                   routerLink="/tickets"
@@ -168,8 +161,8 @@ addIcons({
                 >
                   <ion-icon name="ticket-outline"></ion-icon>
                   <div class="drawer-link-text">
-                    <span class="link-title">Gestión de Incidencias</span>
-                    <span class="link-caption">Tickets y SLA activo</span>
+                    <span class="link-title">Centro de Incidencias</span>
+                    <span class="link-caption">Gestión de tickets y SLA</span>
                   </div>
                 </a>
               </ion-menu-toggle>
@@ -182,11 +175,66 @@ addIcons({
                 >
                   <ion-icon name="book-outline"></ion-icon>
                   <div class="drawer-link-text">
-                    <span class="link-title">Documentación y Ayuda</span>
-                    <span class="link-caption">Manual técnico y arquitectura</span>
+                    <span class="link-title">Manual y Arquitectura</span>
+                    <span class="link-caption">Documentación 0488</span>
                   </div>
                 </a>
               </ion-menu-toggle>
+            </div>
+          </div>
+
+          <!-- Grupo Desplegable 3: Enlaces Oficiales de Entrega -->
+          <div class="nav-group">
+            <button
+              type="button"
+              class="nav-group-toggle"
+              (click)="toggleSection('links')"
+              [attr.aria-expanded]="openSections().links"
+            >
+              <span class="nav-group-label">
+                <ion-icon name="globe-outline"></ion-icon>
+                Enlaces Oficiales Entrega
+              </span>
+              <ion-icon [name]="openSections().links ? 'chevron-down-outline' : 'chevron-forward-outline'" class="chevron-icon"></ion-icon>
+            </button>
+
+            <div class="nav-group-items" *ngIf="openSections().links">
+              <a
+                href="https://enterprise-hub-di-mauve.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="drawer-link"
+              >
+                <ion-icon name="globe-outline"></ion-icon>
+                <div class="drawer-link-text">
+                  <span class="link-title">App Producción (Vercel)</span>
+                  <span class="link-caption">enterprise-hub-di-mauve.vercel.app</span>
+                </div>
+              </a>
+              <a
+                href="https://github.com/Thepimen/enterprise-hub-pwa"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="drawer-link"
+              >
+                <ion-icon name="logo-github"></ion-icon>
+                <div class="drawer-link-text">
+                  <span class="link-title">GitHub · enterprise-hub-pwa</span>
+                  <span class="link-caption">Repositorio principal Git Flow</span>
+                </div>
+              </a>
+              <a
+                href="https://github.com/Thepimen/enterprise-hub-di"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="drawer-link"
+              >
+                <ion-icon name="logo-github"></ion-icon>
+                <div class="drawer-link-text">
+                  <span class="link-title">GitHub · enterprise-hub-di</span>
+                  <span class="link-caption">Repositorio espejo DI 0488</span>
+                </div>
+              </a>
             </div>
           </div>
         </ion-content>
@@ -194,52 +242,101 @@ addIcons({
         <ion-footer class="ion-no-border drawer-footer">
           <button
             type="button"
+            class="drawer-theme-btn"
+            (click)="authService.toggleTheme()"
+          >
+            <ion-icon [name]="authService.theme() === 'dark' ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+            <span>Cambiar a Modo {{ authService.theme() === 'dark' ? 'Claro' : 'Oscuro' }}</span>
+          </button>
+          <button
+            type="button"
             class="drawer-logout-btn"
             (click)="onLogout()"
             aria-label="Cerrar sesión activa"
           >
             <ion-icon name="log-out-outline"></ion-icon>
-            <span>Cerrar Sesión Segura</span>
+            <span>Finalizar Sesión (logout)</span>
           </button>
         </ion-footer>
       </ion-menu>
 
       <!-- Contenedor principal de vistas -->
       <ion-router-outlet id="main-router-outlet"></ion-router-outlet>
+
+      <!-- Barra Inferior Adaptativa para Móvil (Responsive Bottom Dock) -->
+      <nav
+        class="mobile-bottom-dock"
+        *ngIf="authService.isAuthenticated()"
+        aria-label="Navegación rápida móvil"
+      >
+        <a
+          *ngIf="authService.currentUser()?.role === 'admin'"
+          routerLink="/admin"
+          routerLinkActive="dock-item--active"
+          class="dock-item"
+        >
+          <ion-icon name="stats-chart-outline"></ion-icon>
+          <span>NOC Admin</span>
+        </a>
+        <a
+          routerLink="/user-dashboard"
+          routerLinkActive="dock-item--active"
+          class="dock-item"
+        >
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Operador</span>
+        </a>
+        <a
+          routerLink="/tickets"
+          routerLinkActive="dock-item--active"
+          class="dock-item"
+        >
+          <ion-icon name="ticket-outline"></ion-icon>
+          <span>Tickets</span>
+        </a>
+        <a
+          routerLink="/help"
+          routerLinkActive="dock-item--active"
+          class="dock-item"
+        >
+          <ion-icon name="book-outline"></ion-icon>
+          <span>Manual</span>
+        </a>
+      </nav>
     </ion-app>
   `,
   styles: [`
     .enterprise-drawer {
-      --width: 300px;
+      --width: 310px;
       --background: var(--surface-card);
     }
     .drawer-toolbar {
       --background: var(--surface-card);
       border-bottom: 1px solid var(--color-border);
-      padding: 6px 12px;
+      padding: 8px 12px;
     }
     .drawer-brand-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 4px;
+      padding: 4px;
     }
     .drawer-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
     }
     .brand-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: var(--btn-primary-bg);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
-      flex-shrink: 0;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
     }
     .brand-titles {
       display: flex;
@@ -247,19 +344,31 @@ addIcons({
     }
     .brand-name {
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--color-text-primary);
       letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-ver {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(6, 182, 212, 0.16);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.35);
     }
     .brand-sub {
       font-size: 0.7rem;
       color: var(--color-text-secondary);
-      font-weight: 500;
+      font-weight: 600;
     }
     .drawer-close-btn {
       width: 32px;
       height: 32px;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid var(--color-border);
       background: var(--surface-elevated);
       color: var(--color-text-primary);
@@ -268,10 +377,6 @@ addIcons({
       justify-content: center;
       cursor: pointer;
       font-size: 1.1rem;
-      transition: background 0.15s;
-    }
-    .drawer-close-btn:hover {
-      background: var(--color-hover);
     }
 
     .drawer-content {
@@ -281,7 +386,7 @@ addIcons({
     .session-card {
       margin: 14px 12px;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface-elevated);
       border: 1px solid var(--color-border);
       display: flex;
@@ -289,12 +394,12 @@ addIcons({
       gap: 12px;
     }
     .session-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
-      background: #059669;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #059669, #10b981);
       color: #ffffff;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 0.85rem;
       display: flex;
       align-items: center;
@@ -302,20 +407,30 @@ addIcons({
       flex-shrink: 0;
     }
     .session-avatar.avatar-admin {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
     }
     .session-meta {
       min-width: 0;
       flex: 1;
     }
+    .session-user-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
     .session-user {
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: var(--color-text-primary);
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin: 0;
+    }
+    .online-pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
     }
     .session-badges {
       display: flex;
@@ -324,8 +439,8 @@ addIcons({
       flex-wrap: wrap;
     }
     .role-pill {
-      font-size: 0.65rem;
-      font-weight: 700;
+      font-size: 0.62rem;
+      font-weight: 800;
       padding: 2px 7px;
       border-radius: 4px;
       letter-spacing: 0.04em;
@@ -341,20 +456,19 @@ addIcons({
       border: 1px solid var(--badge-user-border);
     }
     .storage-pill {
-      font-size: 0.625rem;
+      font-size: 0.6rem;
       font-family: var(--font-mono);
       color: var(--color-text-secondary);
       background: var(--surface-card);
       border: 1px solid var(--color-border);
-      padding: 1px 6px;
+      padding: 2px 6px;
       border-radius: 4px;
     }
 
-    /* Secciones desplegables (Acordeón) */
     .nav-group {
-      margin: 8px 12px;
+      margin: 10px 12px;
       border: 1px solid var(--color-border);
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
       background: var(--surface-card);
     }
@@ -367,15 +481,11 @@ addIcons({
       background: var(--surface-elevated);
       border: none;
       color: var(--color-text-primary);
-      font-size: 0.75rem;
-      font-weight: 700;
+      font-size: 0.72rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       cursor: pointer;
-      transition: background 0.15s;
-    }
-    .nav-group-toggle:hover {
-      background: var(--color-hover);
     }
     .nav-group-label {
       display: flex;
@@ -384,13 +494,12 @@ addIcons({
     }
     .nav-group-label ion-icon {
       font-size: 1rem;
-      color: var(--color-primary);
+      color: var(--color-accent);
     }
     .chevron-icon {
       font-size: 0.9rem;
       color: var(--color-text-secondary);
     }
-
     .nav-group-items {
       padding: 6px;
       display: flex;
@@ -402,7 +511,7 @@ addIcons({
       align-items: center;
       gap: 10px;
       padding: 9px 10px;
-      border-radius: 6px;
+      border-radius: 8px;
       text-decoration: none;
       color: var(--color-text-secondary);
       border-left: 3px solid transparent;
@@ -415,27 +524,23 @@ addIcons({
     .drawer-link ion-icon {
       font-size: 1.15rem;
       flex-shrink: 0;
-      color: var(--color-text-secondary);
     }
     .drawer-link--active {
       background: var(--nav-active-bg) !important;
       color: var(--nav-active-text) !important;
       border-left-color: var(--nav-active-border) !important;
     }
-    .drawer-link--active ion-icon {
-      color: var(--nav-active-text) !important;
-    }
     .drawer-link-text {
       display: flex;
       flex-direction: column;
     }
     .link-title {
-      font-size: 0.84rem;
-      font-weight: 600;
+      font-size: 0.82rem;
+      font-weight: 700;
       line-height: 1.2;
     }
     .link-caption {
-      font-size: 0.68rem;
+      font-size: 0.67rem;
       opacity: 0.8;
       margin-top: 2px;
     }
@@ -444,6 +549,24 @@ addIcons({
       padding: 12px;
       background: var(--surface-card);
       border-top: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .drawer-theme-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      background: var(--surface-elevated);
+      color: var(--color-text-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
     }
     .drawer-logout-btn {
       width: 100%;
@@ -452,18 +575,57 @@ addIcons({
       justify-content: center;
       gap: 8px;
       padding: 10px 14px;
-      border-radius: 6px;
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-      font-size: 0.8125rem;
-      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.14);
+      color: #f87171;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s ease;
     }
     .drawer-logout-btn:hover {
       background: #ef4444;
       color: #ffffff;
+    }
+
+    /* Mobile Bottom Dock (Solo pantallas <= 768px) */
+    .mobile-bottom-dock {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .mobile-bottom-dock {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 58px;
+        background: var(--surface-card);
+        border-top: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        z-index: 900;
+        padding: 0 8px;
+      }
+      .dock-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-decoration: none;
+        color: var(--color-text-secondary);
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+      }
+      .dock-item ion-icon {
+        font-size: 1.2rem;
+      }
+      .dock-item--active {
+        color: var(--nav-active-text);
+        background: var(--nav-active-bg);
+      }
     }
   `],
 })
@@ -471,12 +633,13 @@ export class AppComponent {
   readonly authService = inject(AuthService);
   private readonly menuCtrl = inject(MenuController);
 
-  readonly openSections = signal<{ rbac: boolean; ops: boolean }>({
+  readonly openSections = signal<{ rbac: boolean; ops: boolean; links: boolean }>({
     rbac: true,
     ops: true,
+    links: true,
   });
 
-  toggleSection(key: 'rbac' | 'ops'): void {
+  toggleSection(key: 'rbac' | 'ops' | 'links'): void {
     this.openSections.update((curr) => ({ ...curr, [key]: !curr[key] }));
   }
 
