@@ -417,9 +417,9 @@ export interface RowAction {
       border-color: var(--color-text-disabled);
     }
     .page-btn.active {
-      background: #0f172a;
+      background: var(--btn-primary-bg);
       color: #ffffff;
-      border-color: #0f172a;
+      border-color: var(--btn-primary-border);
       font-weight: 600;
     }
     .page-btn:disabled {

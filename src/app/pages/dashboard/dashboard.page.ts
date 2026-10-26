@@ -1,32 +1,34 @@
 /**
  * @file dashboard.page.ts
- * @description Dashboard de operaciones e infraestructura empresarial.
- * Refactorizado según las directrices de diseño Taste Skill:
- * - Eliminación total de gráficos de barras en favor de gráficos de telemetría de líneas de alta precisión
- * - Paleta sin degradados estridentes, tipografía sobria con cifras tabulares
- * - Anillo geométrico refinado para incidencias y KPIs tipográficos
- * - Carga concurrente con forkJoin (SQL relacional + NoSQL telemetría) y exportación PDF/CSV
+ * @description Consola de Administración e Infraestructura Empresarial (Admin / Dashboard).
+ * Protegida mediante [authGuard, roleGuard('admin')].
+ * - Integra verificación visual del Signal authService.currentUser() y botón logout()
+ * - Menú lateral desplegable (overlay drawer) + selector desplegable en barra superior
+ * - Botones de alto contraste garantizado (sin colisiones blanco-sobre-blanco en modo oscuro)
+ * - Telemetría continua de líneas (CPU #10b981 y RAM #3b82f6) y anillo geométrico de incidencias
  */
 import {
   Component, OnInit, OnDestroy, AfterViewInit,
   ViewChild, ElementRef, inject, ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonMenuButton, IonButton, IonIcon, IonSpinner,
-  IonRefresher, IonRefresherContent
+  IonRefresher, IonRefresherContent, MenuController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   refreshOutline, downloadOutline, documentTextOutline,
   serverOutline, alertCircleOutline, checkmarkCircleOutline,
   timerOutline, statsChartOutline, cloudDownloadOutline,
-  menuOutline, trendingUpOutline, pulseOutline, hardwareChipOutline
+  menuOutline, trendingUpOutline, pulseOutline, hardwareChipOutline,
+  shieldCheckmarkOutline, logOutOutline, chevronDownOutline,
+  ticketOutline, bookOutline, personCircleOutline
 } from 'ionicons/icons';
 import Chart from 'chart.js/auto';
 import { SqlMockService } from '../../core/services/sql-mock.service';
@@ -41,7 +43,9 @@ import { Ticket } from '../../core/models/ticket.model';
 addIcons({
   refreshOutline, downloadOutline, documentTextOutline, serverOutline,
   alertCircleOutline, checkmarkCircleOutline, timerOutline, statsChartOutline,
-  cloudDownloadOutline, menuOutline, trendingUpOutline, pulseOutline, hardwareChipOutline
+  cloudDownloadOutline, menuOutline, trendingUpOutline, pulseOutline,
+  hardwareChipOutline, shieldCheckmarkOutline, logOutOutline,
+  chevronDownOutline, ticketOutline, bookOutline, personCircleOutline
 });
 
 @Component({
@@ -49,7 +53,7 @@ addIcons({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, MetricCardComponent,
+    CommonModule, RouterLink, MetricCardComponent,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
     IonMenuButton, IonButton, IonIcon, IonSpinner,
     IonRefresher, IonRefresherContent,
@@ -58,15 +62,65 @@ addIcons({
     <ion-header [translucent]="true">
       <ion-toolbar class="app-toolbar">
         <ion-buttons slot="start">
-          <ion-menu-button aria-label="Abrir menú de navegación"></ion-menu-button>
+          <ion-menu-button menu="main-menu" aria-label="Abrir menú lateral desplegable"></ion-menu-button>
+          <button
+            type="button"
+            class="menu-trigger-btn"
+            (click)="toggleDrawer()"
+            aria-label="Desplegar menú de navegación"
+          >
+            <ion-icon name="menu-outline" aria-hidden="true"></ion-icon>
+            <span>Menú</span>
+          </button>
         </ion-buttons>
+
         <ion-title>
           <span class="toolbar-title">
             <span class="toolbar-brand-dot"></span>
-            Consola Operativa
+            Consola de Administración · RBAC Admin
           </span>
         </ion-title>
+
         <ion-buttons slot="end">
+          <!-- Menú Desplegable de Usuario y Vistas en Cabecera -->
+          <div class="header-dropdown-wrap">
+            <button
+              type="button"
+              class="dropdown-toggle-btn"
+              (click)="toggleDropdown()"
+              [attr.aria-expanded]="dropdownOpen()"
+            >
+              <span class="user-chip-avatar">{{ (authService.currentUser()?.username || 'AD').slice(0, 2).toUpperCase() }}</span>
+              <span class="user-chip-name">{{ authService.currentUser()?.username || 'admin' }}</span>
+              <span class="user-chip-role">{{ authService.currentUser()?.role || 'admin' }}</span>
+              <ion-icon name="chevron-down-outline"></ion-icon>
+            </button>
+
+            <div class="header-dropdown-menu" *ngIf="dropdownOpen()">
+              <div class="dropdown-header">
+                <strong>{{ authService.currentUser()?.username }}</strong>
+                <span>Sesión activa · Rol: {{ authService.currentUser()?.role }}</span>
+              </div>
+              <a routerLink="/admin" (click)="closeDropdown()" class="dropdown-item">
+                <ion-icon name="shield-checkmark-outline"></ion-icon>
+                <span>Consola Admin (/admin)</span>
+              </a>
+              <a routerLink="/tickets" (click)="closeDropdown()" class="dropdown-item">
+                <ion-icon name="ticket-outline"></ion-icon>
+                <span>Gestión de Tickets (/tickets)</span>
+              </a>
+              <a routerLink="/help" (click)="closeDropdown()" class="dropdown-item">
+                <ion-icon name="book-outline"></ion-icon>
+                <span>Documentación (/help)</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <button type="button" (click)="onLogout()" class="dropdown-item dropdown-item--danger">
+                <ion-icon name="log-out-outline"></ion-icon>
+                <span>Cerrar Sesión (logout)</span>
+              </button>
+            </div>
+          </div>
+
           <ion-button
             (click)="loadData()"
             [disabled]="isLoading"
@@ -77,6 +131,17 @@ addIcons({
           >
             <ion-icon name="refresh-outline" [class.spin]="isLoading" aria-hidden="true"></ion-icon>
           </ion-button>
+
+          <button
+            type="button"
+            id="btn-admin-logout"
+            class="toolbar-logout-btn"
+            (click)="onLogout()"
+            aria-label="Cerrar sesión de administrador"
+          >
+            <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+            <span>Cerrar Sesión</span>
+          </button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -88,6 +153,37 @@ addIcons({
 
       <main class="dashboard-main" id="main-content" role="main">
 
+        <!-- Banner de Verificación RBAC & Signals (Requisito 3.3 del Laboratorio) -->
+        <section class="rbac-verification-banner" aria-label="Estado de sesión y control de acceso RBAC">
+          <div class="rbac-info-left">
+            <div class="rbac-shield-icon" aria-hidden="true">
+              <ion-icon name="shield-checkmark-outline"></ion-icon>
+            </div>
+            <div class="rbac-details">
+              <div class="rbac-pills-row">
+                <span class="guard-tag">canActivate: [authGuard, roleGuard('admin')]</span>
+                <span class="role-tag">ROL: {{ (authService.currentUser()?.role || 'admin') | uppercase }}</span>
+                <span class="storage-tag">sessionStorage['DAM2_AUTH_SESSION']</span>
+              </div>
+              <p class="rbac-summary">
+                Sesión autenticada con <strong>Angular Signals</strong>:
+                Usuario <code>{{ authService.currentUser()?.username }}</code> ·
+                <code>isAuthenticated() = {{ authService.isAuthenticated() }}</code>
+              </p>
+            </div>
+          </div>
+          <div class="rbac-actions-right">
+            <a routerLink="/tickets" class="action-btn">
+              <ion-icon name="ticket-outline"></ion-icon>
+              <span>Tickets</span>
+            </a>
+            <button type="button" class="action-btn action-btn--danger" (click)="onLogout()">
+              <ion-icon name="log-out-outline"></ion-icon>
+              <span>Logout</span>
+            </button>
+          </div>
+        </section>
+
         <!-- Loading skeleton -->
         <div *ngIf="isLoading" class="loading-overlay" role="status" aria-live="polite" aria-label="Cargando datos del dashboard">
           <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
@@ -96,7 +192,7 @@ addIcons({
 
         <ng-container *ngIf="!isLoading">
 
-          <!-- Cabecera de consola operativa (Anti-slop: informativa, sin saludos vacíos) -->
+          <!-- Cabecera de consola operativa -->
           <header class="dashboard-header" aria-label="Resumen operativo">
             <div class="header-identity">
               <div class="header-breadcrumbs">
@@ -104,7 +200,7 @@ addIcons({
                 <span class="bc-sep">/</span>
                 <span class="bc-current">Supervisión en vivo</span>
               </div>
-              <h1 class="header-title">Monitor de Clúster & Operaciones</h1>
+              <h1 class="header-title">Monitor de Clúster &amp; Operaciones</h1>
               <p class="header-subtitle">
                 <span class="live-indicator">
                   <span class="live-dot" aria-hidden="true"></span>
@@ -113,7 +209,7 @@ addIcons({
                 <span class="meta-sep">•</span>
                 <span class="meta-time">Último paquete: {{ lastUpdate | date:'HH:mm:ss' }}</span>
                 <span class="meta-sep">•</span>
-                <span class="meta-user">Operador: {{ userName }}</span>
+                <span class="meta-user">Operador en sesión: <strong>{{ userName }}</strong> ({{ authService.currentUser()?.role }})</span>
               </p>
             </div>
 
@@ -126,7 +222,7 @@ addIcons({
                 title="Descargar datos en formato CSV"
               >
                 <ion-icon name="download-outline" aria-hidden="true"></ion-icon>
-                <span>CSV</span>
+                <span>Exportar CSV</span>
               </button>
               <button
                 class="action-btn action-btn--primary"
@@ -141,7 +237,7 @@ addIcons({
             </div>
           </header>
 
-          <!-- KPIs Grid (Taste Skill: tipografía, datos tabulares, sin cajas con iconos de colores) -->
+          <!-- KPIs Grid -->
           <section class="kpis-section" aria-label="Indicadores clave de rendimiento">
             <h2 class="section-heading sr-only">KPIs de Rendimiento</h2>
             <div class="kpi-grid">
@@ -157,11 +253,11 @@ addIcons({
             </div>
           </section>
 
-          <!-- Gráficos de alta fidelidad (Sin gráficos de barras - Telemetría continua) -->
+          <!-- Gráficos de alta fidelidad (Telemetría de líneas de alto contraste) -->
           <section class="charts-section" aria-label="Gráficos de telemetría e incidencias">
             <div class="charts-grid">
 
-              <!-- Gráfico de Telemetría: Líneas continuas temporales CPU & Memoria -->
+              <!-- Gráfico de Telemetría: Líneas continuas CPU & Memoria -->
               <article class="chart-panel chart-panel--telemetry" role="region" aria-label="Telemetría de servidores">
                 <header class="chart-panel__header">
                   <div>
@@ -188,7 +284,7 @@ addIcons({
                 </div>
               </article>
 
-              <!-- Gráfico Anillo de Incidencias: Distribución limpia -->
+              <!-- Gráfico Anillo de Incidencias -->
               <article class="chart-panel chart-panel--incidents" role="region" aria-label="Distribución de incidencias">
                 <header class="chart-panel__header">
                   <div>
@@ -288,13 +384,33 @@ addIcons({
       --background: var(--surface-card);
       --border-color: var(--color-border);
       border-bottom: 1px solid var(--color-border);
+      padding: 0 8px;
     }
+    .menu-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid var(--btn-secondary-border);
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    .menu-trigger-btn:hover {
+      background: var(--btn-secondary-bg-hover);
+    }
+
     .toolbar-title {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       font-size: 0.9375rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--color-text-primary);
       letter-spacing: -0.01em;
     }
@@ -302,19 +418,218 @@ addIcons({
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--color-accent);
+      background: #3b82f6;
     }
+
+    /* Dropdown en cabecera */
+    .header-dropdown-wrap {
+      position: relative;
+      margin-right: 4px;
+    }
+    .dropdown-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--color-border-strong);
+      background: var(--surface-elevated);
+      color: var(--color-text-primary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .user-chip-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-chip-role {
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: var(--badge-admin-bg);
+      color: var(--badge-admin-text);
+      border: 1px solid var(--badge-admin-border);
+    }
+    .header-dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      width: 250px;
+      background: var(--surface-card);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      padding: 6px;
+      z-index: 999;
+    }
+    .dropdown-header {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 4px;
+      display: flex;
+      flex-direction: column;
+      font-size: 0.78rem;
+      color: var(--color-text-primary);
+    }
+    .dropdown-header span {
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+    }
+    .dropdown-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+    .dropdown-item:hover {
+      background: var(--surface-elevated);
+    }
+    .dropdown-item--danger {
+      color: #ef4444;
+    }
+    .dropdown-divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: 4px 0;
+    }
+
     .header-refresh-btn {
       --color: var(--color-text-secondary);
     }
+    .toolbar-logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.14);
+      color: #ef4444;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    .toolbar-logout-btn:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
     .spin { animation: spin 0.8s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     .dashboard-main {
       max-width: 1360px;
       margin: 0 auto;
-      padding: 24px 20px 48px;
+      padding: 20px 20px 48px;
     }
+
+    /* Banner de Verificación RBAC & Signals */
+    .rbac-verification-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      border-radius: 10px;
+      background: var(--surface-card);
+      border: 1px solid var(--badge-admin-border);
+      border-left: 4px solid #2563eb;
+    }
+    .rbac-info-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .rbac-shield-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--badge-admin-bg);
+      color: var(--badge-admin-text);
+      border: 1px solid var(--badge-admin-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .rbac-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .guard-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--badge-admin-bg);
+      color: var(--badge-admin-text);
+      border: 1px solid var(--badge-admin-border);
+    }
+    .role-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .storage-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--surface-elevated);
+      color: var(--color-text-secondary);
+      border: 1px solid var(--color-border);
+    }
+    .rbac-summary {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+    }
+    .rbac-summary code {
+      font-family: var(--font-mono);
+      color: var(--color-text-primary);
+      background: var(--surface-elevated);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .rbac-actions-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .loading-overlay {
       display: flex;
       flex-direction: column;
@@ -370,14 +685,14 @@ addIcons({
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #059669;
-      font-weight: 500;
+      color: #10b981;
+      font-weight: 600;
     }
     .live-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #059669;
+      background: #10b981;
     }
     .meta-sep { color: var(--color-text-disabled); }
 
@@ -386,36 +701,45 @@ addIcons({
       align-items: center;
       gap: 8px;
     }
+    /* Botones con contraste garantizado en Modo Claro y Modo Oscuro */
     .action-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 7px 12px;
+      padding: 8px 14px;
       border-radius: 8px;
       font-size: 0.8125rem;
-      font-weight: 500;
-      background: var(--surface-card);
-      color: var(--color-text-primary);
-      border: 1px solid var(--color-border);
+      font-weight: 600;
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border: 1px solid var(--btn-secondary-border);
+      text-decoration: none;
       cursor: pointer;
       transition: all 0.15s ease;
     }
     .action-btn:hover:not(:disabled) {
-      background: var(--color-hover);
-      border-color: var(--color-text-disabled);
+      background: var(--btn-secondary-bg-hover);
     }
     .action-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
     .action-btn--primary {
-      background: var(--color-primary);
-      color: #ffffff;
-      border-color: var(--color-primary);
+      background: var(--btn-primary-bg) !important;
+      color: var(--btn-primary-text) !important;
+      border-color: var(--btn-primary-border) !important;
     }
     .action-btn--primary:hover:not(:disabled) {
-      background: #0f1d3b;
-      border-color: #0f1d3b;
+      background: var(--btn-primary-bg-hover) !important;
+      color: #ffffff !important;
+    }
+    .action-btn--danger {
+      background: rgba(239, 68, 68, 0.14);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    .action-btn--danger:hover {
+      background: #ef4444;
       color: #ffffff;
     }
 
@@ -448,10 +772,8 @@ addIcons({
     .chart-panel {
       background: var(--surface-card);
       border: 1px solid var(--color-border);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
     }
     .chart-panel__header {
       display: flex;
@@ -468,77 +790,73 @@ addIcons({
       letter-spacing: -0.01em;
     }
     .chart-panel__subtitle {
-      font-size: 0.78125rem;
+      font-size: 0.75rem;
       color: var(--color-text-secondary);
       margin: 0;
     }
-
     .chart-legend {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      flex-shrink: 0;
     }
     .chart-legend__item {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 0.75rem;
-      color: var(--color-text-secondary);
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--color-text-primary);
     }
     .legend-line {
       width: 14px;
       height: 3px;
       border-radius: 2px;
     }
-    .legend-line--cpu { background: #0f172a; }
-    .legend-line--mem { background: #2563eb; }
+    .legend-line--cpu { background: #10b981; }
+    .legend-line--mem { background: #3b82f6; }
 
     .chart-canvas-wrapper {
       position: relative;
       height: 270px;
-      width: 100%;
     }
 
-    /* Anillo de incidencias */
+    /* Doughnut layout */
     .doughnut-container {
       display: flex;
-      flex-direction: column;
-      gap: 16px;
       align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-    @media (min-width: 540px) {
-      .doughnut-container {
-        flex-direction: row;
-        gap: 20px;
-      }
+      gap: 24px;
+      flex-wrap: wrap;
+      padding-top: 8px;
     }
     .doughnut-canvas-wrapper {
       position: relative;
       width: 180px;
       height: 180px;
+      margin: 0 auto;
       flex-shrink: 0;
     }
     .doughnut-legend-list {
+      flex: 1;
+      min-width: 150px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      width: 100%;
-      max-width: 200px;
+      gap: 10px;
     }
     .doughnut-legend-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.8125rem;
-      padding: 4px 0;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--color-border);
+      font-size: 0.8125rem;
     }
-    .doughnut-legend-row:last-child { border-bottom: none; }
+    .doughnut-legend-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
     .legend-label-col {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
     }
@@ -546,9 +864,11 @@ addIcons({
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
     .legend-name {
       color: var(--color-text-secondary);
+      font-weight: 500;
     }
     .legend-count {
       font-weight: 600;
@@ -556,34 +876,34 @@ addIcons({
       font-variant-numeric: tabular-nums;
     }
 
-    /* Servidores */
-    .servers-section { margin-top: 8px; }
+    /* Nodos de Infraestructura */
     .section-header-row {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
-      gap: 12px;
+      margin-bottom: 14px;
     }
     .section-heading {
-      font-size: 1.0625rem;
+      font-size: 1rem;
       font-weight: 600;
       color: var(--color-text-primary);
       margin: 0 0 2px;
       letter-spacing: -0.01em;
     }
     .section-subheading {
-      font-size: 0.78125rem;
+      font-size: 0.75rem;
       color: var(--color-text-secondary);
       margin: 0;
     }
     .server-count-badge {
       font-size: 0.75rem;
+      font-weight: 500;
       color: var(--color-text-secondary);
-      background: var(--surface-ground);
-      padding: 3px 8px;
-      border-radius: 6px;
+      background: var(--surface-card);
       border: 1px solid var(--color-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
     }
 
     .server-grid {
@@ -596,19 +916,12 @@ addIcons({
       border: 1px solid var(--color-border);
       border-radius: 10px;
       padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      transition: border-color 0.15s ease;
-    }
-    .server-card:hover {
-      border-color: var(--color-text-disabled);
     }
     .server-card__top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      margin-bottom: 12px;
     }
     .server-hostname {
       font-family: var(--font-mono);
@@ -622,67 +935,68 @@ addIcons({
       gap: 5px;
       font-size: 0.6875rem;
       font-weight: 600;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
     .status-pip {
       width: 5px;
       height: 5px;
       border-radius: 50%;
+      background: currentColor;
     }
     .pill--online {
-      background: rgba(5, 150, 105, 0.08);
-      color: #059669;
-      border: 1px solid rgba(5, 150, 105, 0.2);
+      background: rgba(16, 185, 129, 0.14);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.35);
     }
-    .pill--online .status-pip { background: #059669; }
     .pill--degraded {
-      background: rgba(217, 119, 6, 0.08);
-      color: #d97706;
-      border: 1px solid rgba(217, 119, 6, 0.2);
+      background: rgba(245, 158, 11, 0.14);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
-    .pill--degraded .status-pip { background: #d97706; }
     .pill--offline {
-      background: rgba(220, 38, 38, 0.08);
-      color: #dc2626;
-      border: 1px solid rgba(220, 38, 38, 0.2);
+      background: rgba(239, 68, 68, 0.14);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.35);
     }
-    .pill--offline .status-pip { background: #dc2626; }
 
     .server-card__metrics {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+    .metric-meter {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
     .metric-meter__header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.71875rem;
+      font-size: 0.75rem;
       color: var(--color-text-secondary);
-      margin-bottom: 3px;
+      font-variant-numeric: tabular-nums;
     }
     .metric-meter__header strong {
       color: var(--color-text-primary);
-      font-variant-numeric: tabular-nums;
+      font-weight: 600;
     }
     .metric-meter__track {
       height: 5px;
-      background: var(--surface-ground);
+      background: var(--surface-elevated);
       border-radius: 3px;
       overflow: hidden;
-      border: 1px solid var(--color-border);
     }
     .metric-meter__fill {
       height: 100%;
-      background: #0f172a;
-      border-radius: 2px;
+      background: #10b981;
+      border-radius: 3px;
       transition: width 0.3s ease;
     }
-    .metric-meter__fill--mem { background: #2563eb; }
-    .fill--warn { background: #d97706 !important; }
-    .fill--danger { background: #dc2626 !important; }
+    .metric-meter__fill--mem { background: #3b82f6; }
+    .fill--warn { background: #f59e0b !important; }
+    .fill--danger { background: #ef4444 !important; }
   `]
 })
 export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
@@ -692,14 +1006,17 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   private readonly sqlService = inject(SqlMockService);
   private readonly noSqlService = inject(NoSqlMockService);
   private readonly exportService = inject(ExportService);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly notif = inject(NotificationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  private readonly menuCtrl = inject(MenuController);
 
   private readonly destroy$ = new Subject<void>();
   private telemetryChart: Chart | null = null;
   private doughnutChart: Chart | null = null;
+
+  readonly dropdownOpen = signal(false);
 
   isLoading = true;
   isExporting = false;
@@ -712,7 +1029,7 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   private metrics!: SummaryMetrics;
 
   get userName(): string {
-    return this.authService.currentUser?.name?.split(' ')[0] ?? 'Admin';
+    return this.authService.currentUser()?.username ?? 'admin';
   }
 
   ngOnInit(): void {
@@ -730,9 +1047,26 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
     this.doughnutChart?.destroy();
   }
 
+  async toggleDrawer(): Promise<void> {
+    await this.menuCtrl.toggle('main-menu');
+  }
+
+  toggleDropdown(): void {
+    this.dropdownOpen.update((v) => !v);
+  }
+
+  closeDropdown(): void {
+    this.dropdownOpen.set(false);
+  }
+
+  onLogout(): void {
+    this.dropdownOpen.set(false);
+    this.authService.logout();
+    this.notif.info('Sesión de administrador finalizada.');
+  }
+
   /**
    * Carga datos en paralelo usando forkJoin.
-   * Combina métricas SQL (relacionales) con métricas NoSQL (tiempo real).
    */
   loadData(): void {
     this.isLoading = true;
@@ -757,7 +1091,6 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
           this.isLoading = false;
           this.cdr.markForCheck();
 
-          // Inicializar gráfico continuo de telemetría y anillo de incidencias
           setTimeout(() => {
             this.initTelemetryLineChart(live);
             this.initDoughnutChart(summary);
@@ -799,7 +1132,7 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
     }, 300);
   }
 
-  private buildKpis(s: SummaryMetrics, totalTickets: number): void {
+  private buildKpis(s: SummaryMetrics, _totalTickets: number): void {
     this.kpis = [
       {
         id: 'servers',
@@ -838,23 +1171,23 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
     ];
   }
 
-  private buildTicketLegend(s: SummaryMetrics): void {
+  private buildTicketLegend(_s: SummaryMetrics): void {
     const openCount = this.allTickets.filter(t => t.status === 'OPEN').length;
     const inProgressCount = this.allTickets.filter(t => t.status === 'IN_PROGRESS').length;
     const resolvedCount = this.allTickets.filter(t => t.status === 'RESOLVED').length;
     const closedCount = this.allTickets.filter(t => t.status === 'CLOSED').length;
 
     this.ticketLegend = [
-      { label: 'Abiertas',     value: openCount,       color: '#dc2626' },
-      { label: 'En progreso',  value: inProgressCount, color: '#d97706' },
-      { label: 'Resueltas',    value: resolvedCount,   color: '#059669' },
+      { label: 'Abiertas',     value: openCount,       color: '#ef4444' },
+      { label: 'En progreso',  value: inProgressCount, color: '#f59e0b' },
+      { label: 'Resueltas',    value: resolvedCount,   color: '#10b981' },
       { label: 'Cerradas',     value: closedCount,     color: '#64748b' },
     ];
   }
 
   /**
-   * Inicializa el gráfico continuo de telemetría (Taste Skill: sustituye barras genéricas).
-   * Línea de alta precisión con marcas discretas y cuadrícula tenue.
+   * Inicializa el gráfico continuo de telemetría con colores de alto contraste (#10b981 y #3b82f6)
+   * visibles tanto en modo claro como en modo oscuro.
    */
   private initTelemetryLineChart(live: LiveMetrics): void {
     const canvas = this.telemetryChartRef?.nativeElement;
@@ -874,26 +1207,30 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
           {
             label: 'CPU (%)',
             data: cpuData,
-            borderColor: '#0f172a',
-            backgroundColor: 'rgba(15, 23, 42, 0.04)',
-            borderWidth: 2,
-            tension: 0.25,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            borderWidth: 2.5,
+            tension: 0.3,
             fill: true,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#0f172a',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
           },
           {
             label: 'RAM (%)',
             data: memData,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.05)',
-            borderWidth: 1.8,
-            tension: 0.25,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.12)',
+            borderWidth: 2.5,
+            tension: 0.3,
             fill: true,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#2563eb',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
           },
         ],
       },
@@ -922,17 +1259,17 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
               stepSize: 25,
               callback: (v) => `${v}%`,
               font: { size: 11, family: 'Inter' },
-              color: '#64748b',
+              color: '#94a3b8',
             },
             grid: {
-              color: 'rgba(226, 232, 240, 0.7)',
+              color: 'rgba(148, 163, 184, 0.18)',
             },
             border: { display: false },
           },
           x: {
             ticks: {
               font: { size: 10, family: 'monospace' },
-              color: '#64748b',
+              color: '#94a3b8',
             },
             grid: { display: false },
             border: { display: false },
@@ -945,7 +1282,7 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Inicializa el anillo geométrico de incidencias (cutout 74%).
    */
-  private initDoughnutChart(s: SummaryMetrics): void {
+  private initDoughnutChart(_s: SummaryMetrics): void {
     const canvas = this.doughnutChartRef?.nativeElement;
     if (!canvas) return;
 
@@ -963,8 +1300,8 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
         datasets: [
           {
             data: [openCount, inProgressCount, resolvedCount, closedCount],
-            backgroundColor: ['#dc2626', '#d97706', '#059669', '#64748b'],
-            borderColor: '#ffffff',
+            backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#64748b'],
+            borderColor: 'rgba(15, 23, 42, 0.25)',
             borderWidth: 2,
             hoverOffset: 6,
           },
