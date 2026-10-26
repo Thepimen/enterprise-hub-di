@@ -16,6 +16,12 @@ export const authGuard: CanActivateFn = (_route, state) => {
     return true;
   }
 
+  authService.recordAudit(
+    'GUARD',
+    'WARN',
+    `authGuard: Acceso sin sesión a '${state.url}' interceptado -> Redirigido a /login?returnUrl=${encodeURIComponent(state.url)}`
+  );
+
   return router.createUrlTree(['/login'], {
     queryParams: { returnUrl: state.url },
   });
