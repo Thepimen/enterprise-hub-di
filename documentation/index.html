@@ -1,0 +1,414 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>enterprise-hub-pwa documentation</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+	   <link rel="stylesheet" href="./styles/style.css">
+        <link rel="stylesheet" href="./styles/dark.css">
+    </head>
+    <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
+
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+          <script>
+              // --- Iframe navigation tracking for Template Playground ---
+              function sendCurrentUrlToParent() {
+                  if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({
+                          type: 'compodoc-iframe-navigate',
+                          url: window.location.pathname + window.location.hash
+                      }, '*');
+                  }
+              }
+              window.addEventListener('hashchange', sendCurrentUrlToParent, false);
+              window.addEventListener('popstate', sendCurrentUrlToParent, false);
+              window.addEventListener('DOMContentLoaded', sendCurrentUrlToParent, false);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="./" class="navbar-brand">enterprise-hub-pwa documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search">
+    <button type="button"
+        class="search-input-clear"
+        aria-label="Clear search"
+        data-search-input-clear>&times;</button>
+</div>
+            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="d-none d-md-block menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content readme">
+                   <div class="content-data">
+
+
+<h1>EnterpriseHub PWA 🚀</h1>
+<blockquote>
+<p><strong>Sistema de Gestión Multiplataforma B2B y Monitorización de Infraestructura</strong><br>Aplicación Web Progresiva (PWA) de Alto Rendimiento para la Supervisión Empresarial y Gestión de Incidencias Técnicas en Tiempo Real.</p>
+</blockquote>
+<p><a href="https://angular.io"><img src="https://img.shields.io/badge/Angular-22.x-red?logo=angular" alt="Angular" class="img-responsive"></a>
+<a href="https://ionicframework.com"><img src="https://img.shields.io/badge/Ionic-9.x-blue?logo=ionic" alt="Ionic" class="img-responsive"></a>
+<a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-6.x-blue?logo=typescript" alt="TypeScript" class="img-responsive"></a>
+<a href="https://www.w3.org/WAI/WCAG21/quickref/"><img src="https://img.shields.io/badge/WCAG-2.1%20AA%2FAAA-green" alt="WCAG" class="img-responsive"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/License-Academic-orange" alt="License" class="img-responsive"></a></p>
+<hr>
+<h2>📋 1. Metadatos Académicos</h2>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th style="text-align: left">Campo</th><th style="text-align: left">Información Oficial</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left"><strong>Proyecto</strong></td><td style="text-align: left">EnterpriseHub PWA — Sistema de Gestión Multiplataforma B2B y Monitorización</td></tr>
+<tr><td style="text-align: left"><strong>Autor</strong></td><td style="text-align: left"><strong>Luis Lázaro Pimentel</strong></td></tr>
+<tr><td style="text-align: left"><strong>Centro Educativo</strong></td><td style="text-align: left"><strong>Instituto Nebrija de Formación Profesional</strong></td></tr>
+<tr><td style="text-align: left"><strong>Ciclo Formativo</strong></td><td style="text-align: left">2º Grado Superior en Desarrollo de Aplicaciones Multiplataforma (DAM)</td></tr>
+<tr><td style="text-align: left"><strong>Módulo Profesional</strong></td><td style="text-align: left">Desarrollo de Interfaces</td></tr>
+<tr><td style="text-align: left"><strong>Código del Módulo</strong></td><td style="text-align: left"><strong>0488</strong></td></tr>
+<tr><td style="text-align: left"><strong>Convocatoria / Curso</strong></td><td style="text-align: left">2025 – 2026</td></tr>
+</tbody>
+</table>
+<hr>
+<h2>🔑 2. Credenciales de Acceso para Evaluación</h2>
+<p>La aplicación implementa un sistema de control de acceso basado en roles (<strong>RBAC</strong> - <em>Role-Based Access Control</em>) con persistencia en sesión y protección perimetral de rutas. Para facilitar la evaluación, la pantalla de inicio de sesión incorpora botones de <strong>acceso rápido</strong> con las siguientes cuentas preconfiguradas:</p>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th style="text-align: left">Rol</th><th style="text-align: left">Correo Electrónico</th><th style="text-align: left">Contraseña</th><th style="text-align: left">Nivel de Acceso y Permisos</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left"><strong>👑 Administrador (<code>ADMIN</code>)</strong></td><td style="text-align: left"><code>admin@enterprise.io</code></td><td style="text-align: left"><code>Admin123!</code></td><td style="text-align: left"><strong>Acceso Total:</strong> Supervisión de KPIs ejecutivos, gráficos analíticos de infraestructura, tabla avanzada de tickets con filtrado/búsqueda, creación de incidencias, exportación de informes en PDF/CSV y centro de ayuda.</td></tr>
+<tr><td style="text-align: left"><strong>👤 Usuario Estándar (<code>USER</code>)</strong></td><td style="text-align: left"><code>user@enterprise.io</code></td><td style="text-align: left"><code>User123!</code></td><td style="text-align: left"><strong>Acceso Operativo:</strong> Visualización y gestión del módulo de Tickets, creación de incidencias y Centro de Ayuda. <strong>Acceso Restringido:</strong> El acceso a <code>/dashboard</code> está bloqueado preventivamente a nivel de navegación y enrutador mediante <code>roleGuard</code>.</td></tr>
+</tbody>
+</table>
+<hr>
+<h2>🏛️ 3. Arquitectura y Justificación Técnica por Resultados de Aprendizaje</h2>
+<p>EnterpriseHub PWA ha sido concebida bajo la arquitectura <strong>MVVM (Model-View-ViewModel)</strong> utilizando las características más avanzadas del ecosistema moderno de <strong>Angular</strong> e <strong>Ionic Framework</strong>, asegurando modularidad, desacoplamiento, reactividad y máxima eficiencia.</p>
+<h3>RA 1: Planificación de Interfaces y Navegación Reactiva (20%)</h3>
+<ul>
+<li><strong>Arquitectura Standalone y Lazy Loading:</strong> El 100% de las rutas en <code>app.routes.ts</code> utilizan componentes independientes (<code>standalone: true</code>) cargados bajo demanda mediante <code>loadComponent: () =&gt; import(...)</code>. Esto minimiza el bundle inicial (<em>Initial Chunk</em>) y maximiza las métricas Core Web Vitals (LCP, FID/INP).</li>
+<li><strong>Control de Acceso Funcional (Guards):</strong><ul>
+<li><code>authGuard</code>: Protege las rutas privadas interceptando la navegación si el usuario no posee una sesión activa, redirigiendo automáticamente a <code>/login</code> con preservación de estado.</li>
+<li><code>roleGuard</code>: Comprueba los privilegios del usuario autenticado contra los roles requeridos (<code>data: { roles: [&#39;ADMIN&#39;] }</code>). Si un usuario de rol <code>USER</code> intenta acceder al Dashboard, la navegación se deniega y se redirige a una zona segura informando mediante notificación accesible.</li>
+</ul>
+</li>
+<li><strong>Gestión de Estado Reactivo Centralizado:</strong> <code>AuthService</code> gestiona el estado global de autenticación a través de un <code>BehaviorSubject&lt;User | null&gt;</code>, exponiendo un observable público inmutable <code>currentUser$</code>. La sesión se sincroniza bidireccionalmente con <code>localStorage</code> para garantizar la persistencia tras recargas accidentales o cierres de ventana.</li>
+</ul>
+<h3>RA 2: Formularios Reactivos y Validación Asíncrona (15%)</h3>
+<ul>
+<li><strong>Estrategia de Detección de Cambios Optimizada:</strong> Implementación sistemática de <code>ChangeDetectionStrategy.OnPush</code> en componentes y vistas. Las vistas solo recalculan su árbol de renderizado cuando cambian sus referencias de <code>@Input()</code> o emiten flujos RxJS locales, eliminando ciclos innecesarios de Zone.js.</li>
+<li><strong>Formularios Fuertemente Tipados:</strong> Tanto <code>LoginPage</code> como <code>RegisterPage</code> implementan <code>ReactiveFormsModule</code> con validación estricta de formato, longitud, patrones de complejidad de contraseña (<code>pattern</code>) y concordancia de campos (<code>passwordMatchValidator</code>).</li>
+<li><strong>Validador Asíncrono de Correo Único (<code>uniqueEmailValidator</code>):</strong> En <code>RegisterPage</code>, la validación de duplicidad de cuenta se realiza de manera no bloqueante:<ul>
+<li>Aplica un operador de retraso reactivo <code>timer(300)</code> para debouncear la pulsación de teclas.</li>
+<li>Comprueba la disponibilidad del correo frente al servicio simulado.</li>
+<li>Cancela peticiones obsoletas en vuelo mediante <code>switchMap</code>.</li>
+</ul>
+</li>
+<li><strong>Accesibilidad en Formularios:</strong> Campos vinculados mediante <code>aria-invalid</code>, descripciones de error dinámicas asociadas por <code>aria-describedby</code> y contenedores de notificación con <code>role=&quot;alert&quot;</code> y <code>aria-live=&quot;assertive&quot;</code> para lectores de pantalla.</li>
+</ul>
+<h3>RA 3: Componentes Reutilizables y Agnósticos (20%)</h3>
+<ul>
+<li><strong>Componentes Dumb/Presentational Desacoplados:</strong><ul>
+<li><code>DataTableComponent</code> (<code>&lt;app-data-table&gt;</code>): Componente agnóstico de tabla que abstrae la renderización de datos tabulares, admitiendo columnas configurables (<code>TableColumn[]</code>), ordenación, badges semánticos, paginación configurable y acciones personalizadas por fila emitidas hacia el componente padre mediante <code>@Output() actionTriggered</code>.</li>
+<li><code>MetricCardComponent</code> (<code>&lt;app-metric-card&gt;</code>): Widget KPI reutilizable que recibe valores numéricos, títulos, iconos dinámicos y métricas de tendencia (<code>trend</code>), calculando indicadores visuales y accesibles de estado (<code>success</code>, <code>warning</code>, <code>danger</code>).</li>
+</ul>
+</li>
+<li><strong>Ciclo de Vida Completo y Limpieza de Recursos:</strong><ul>
+<li>Ambos componentes implementan rigurosamente las interfaces de ciclo de vida de Angular: <code>OnInit</code>, <code>OnChanges</code> y <code>OnDestroy</code>.</li>
+<li>En <code>data-table.component.ts</code>, la barra de búsqueda reactiva procesa el flujo mediante <code>debounceTime(300)</code> y <code>distinctUntilChanged()</code>, asegurando la liberación absoluta de memoria en <code>ngOnDestroy()</code> mediante el operador <code>takeUntil(this.destroy$)</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>RA 4: Diseño Adaptativo, Estilos y Accesibilidad Universal (15%)</h3>
+<ul>
+<li><strong>Filosofía Mobile-First y Diseño Responsivo:</strong> Estructura basada en rejilla flexible de Ionic Grid (<code>ion-grid</code>, <code>ion-row</code>, <code>ion-col</code>) con puntos de interrupción adaptativos que garantizan visualización óptima desde dispositivos móviles (320px) hasta monitores ultrapanorámicos (4K).</li>
+<li><strong>Design Tokens y Cumplimiento WCAG 2.1 AA/AAA:</strong><ul>
+<li>Paleta cromática corporativa configurada mediante variables CSS (<code>src/theme/variables.scss</code>), con contrastes de color verificados superiores a <strong>4.5:1</strong> en texto normal y <strong>7:1</strong> en elementos de alta prioridad (AAA).</li>
+<li>Estilos de foco visible mejorados (<code>:focus-visible</code>) con contorno de 3px en contraste inverso, asegurando navegabilidad completa mediante teclado (<code>Tab</code>, <code>Shift+Tab</code>, <code>Enter</code>, <code>Space</code>, <code>Escape</code>).</li>
+<li>Atributos semánticos WAI-ARIA enriquecidos: <code>role=&quot;region&quot;</code>, <code>role=&quot;table&quot;</code>, <code>role=&quot;columnheader&quot;</code>, <code>role=&quot;status&quot;</code>, <code>aria-label</code>, y textos alternativos ocultos para lectores de pantalla (<code>.sr-only</code>).</li>
+<li>Respeto explícito a las preferencias de usuario del sistema operativo mediante media queries <code>@media (prefers-reduced-motion: reduce)</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>RA 5: Concurrencia de Datos, Visualización y Exportación (15%)</h3>
+<ul>
+<li><strong>Concurrencia Asíncrona con <code>forkJoin</code>:</strong> En <code>DashboardPage</code>, la carga inicial orquesta en paralelo dos orígenes de datos desacoplados:<ul>
+<li><code>SqlMockService</code>: Emula una base de datos relacional transaccional (tickets, resoluciones, categorías) con retardo controlado de red (300ms).</li>
+<li><code>NoSqlMockService</code>: Emula una base de datos documental/series temporales que reporta telemetría de servidores y métricas en vivo.</li>
+<li>La sincronización mediante <code>forkJoin</code> garantiza que la interfaz solo presenta los KPIs y gráficos cuando todos los flujos han emitido con éxito, gestionando estados de carga (<code>loadingState</code>) transparentes.</li>
+</ul>
+</li>
+<li><strong>Visualización Interactiva con Chart.js:</strong> Generación dinámica de gráficos de barras (distribución de tickets por estado y prioridad) y gráficos tipo Donut (utilización de recursos de servidores).</li>
+<li><strong>Exportación de Informes Profesionales:</strong><ul>
+<li><strong>PDF:</strong> Implementado a través de <code>ExportService</code> con <code>jspdf</code> y <code>jspdf-autotable</code>, generando documentos tabulados con diseño vectorial corporativo, paginación automática, fecha de expedición y metadatos académicos de autoría.</li>
+<li><strong>CSV:</strong> Generación nativa en cliente codificada en UTF-8 mediante <code>Blob</code> y enlace de descarga automática para interoperabilidad con suites ofimáticas (Excel, LibreOffice).</li>
+</ul>
+</li>
+</ul>
+<h3>RA 6: Documentación Técnica y Manual de Usuario (10%)</h3>
+<ul>
+<li><strong>Compodoc Automatizado:</strong> Generación de documentación técnica estática mediante <code>@compodoc/compodoc</code>, analizando árboles de dependencias, propiedades <code>@Input</code>/<code>@Output</code>, contratos de servicios y modelos tipados.</li>
+<li><strong>Comentarios JSDoc Estrictos:</strong> El 100% de clases, métodos, interfaces y componentes cuentan con anotaciones estructuradas con descripción, parámetros (<code>@param</code>) y valores de retorno (<code>@returns</code>).</li>
+<li><strong>Manual de Usuario Integrado:</strong> Centro de ayuda embebido en <code>/help</code> interactivo con formato accordion y manual detallado de operaciones.</li>
+</ul>
+<h3>RA 7: Control de Versiones, Git Flow y Despliegue en Producción (5%)</h3>
+<ul>
+<li><strong>Estrategia Git Flow Estricta:</strong><ul>
+<li>Rama <code>main</code>: Código de producción estable etiquetado (<code>release: v1.0.0</code>).</li>
+<li>Rama <code>develop</code>: Rama base de desarrollo e integración continua.</li>
+<li>Ramas de características (<code>feature/*</code>): Desarrolladas de forma aislada e integradas en <code>develop</code> mediante fusiones explícitas sin avance rápido (<code>--no-ff</code>).</li>
+<li>Convención <strong>Conventional Commits</strong> (<code>feat:</code>, <code>fix:</code>, <code>style:</code>, <code>docs:</code>, <code>refactor:</code>, <code>chore:</code>).</li>
+</ul>
+</li>
+<li><strong>Preparación para Producción:</strong><ul>
+<li>Build optimizado con Angular Ahead-of-Time (AOT), Tree-Shaking, minimización de estilos y compresión de assets (<code>npm run build:prod</code> -&gt; <code>www/</code>).</li>
+<li>Configuración declarativa <code>vercel.json</code> con soporte para rutas SPA (reescrituras hacia <code>index.html</code>), caché inmutable para assets estáticos y cabeceras de seguridad HTTP (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>X-XSS-Protection</code>, <code>Referrer-Policy</code>).</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>📖 4. Manual de Usuario Paso a Paso</h2>
+<h3>4.1. Acceso al Sistema (Login)</h3>
+<ol>
+<li>Inicie la aplicación en el navegador. La ruta raíz <code>/</code> redirigirá automáticamente a <code>/login</code>.</li>
+<li>Para acceder manualmente, introduzca el correo electrónico y contraseña.</li>
+<li>Para agilizar la evaluación, pulse directamente sobre los botones rápidos:<ul>
+<li><strong>&quot;Acceso Rápido Administrador&quot;</strong> para cargar <code>admin@enterprise.io</code>.</li>
+<li><strong>&quot;Acceso Rápido Usuario&quot;</strong> para cargar <code>user@enterprise.io</code>.</li>
+</ul>
+</li>
+<li>Pulse <strong>&quot;Iniciar Sesión&quot;</strong> o presione <code>Enter</code>. El sistema validará las credenciales y le redirigirá al módulo correspondiente.</li>
+</ol>
+<h3>4.2. Registro de Nuevas Cuentas con Validación Asíncrona</h3>
+<ol>
+<li>Desde la pantalla de Login, pulse en el enlace <strong>&quot;¿No tienes cuenta? Regístrate aquí&quot;</strong>.</li>
+<li>Complete el formulario de registro:<ul>
+<li><strong>Nombre completo:</strong> Mínimo 3 caracteres.</li>
+<li><strong>Correo Electrónico:</strong> Introduzca un correo corporativo. Si prueba a escribir <code>admin@enterprise.io</code> o <code>user@enterprise.io</code>, observará cómo el validador asíncrono detecta la duplicidad tras 300ms y muestra un mensaje de advertencia accesible sin enviar el formulario.</li>
+<li><strong>Contraseña:</strong> Requiere al menos 8 caracteres, una letra mayúscula, una minúscula y un número.</li>
+<li><strong>Confirmar Contraseña:</strong> Validación cruzada en tiempo real.</li>
+</ul>
+</li>
+<li>Al completar los campos válidos, el botón de envío se habilitará. Al registrarse, se iniciará sesión automáticamente.</li>
+</ol>
+<h3>4.3. Dashboard de Monitorización (Solo Perfil ADMIN)</h3>
+<ol>
+<li>Tras iniciar sesión como Administrador, se abrirá <code>/dashboard</code>.</li>
+<li><strong>KPIs en Tiempo Real:</strong> En la zona superior se muestran 4 tarjetas con indicadores de tickets abiertos, tiempo medio de resolución, servidores activos y tasa de cumplimiento de SLA.</li>
+<li><strong>Gráficos Analíticos:</strong> Inspeccione visualmente el estado del parque de servidores y la volumetría de tickets clasificados por gravedad.</li>
+<li><strong>Exportación Rápida:</strong> Utilice los botones superiores <strong>&quot;Exportar PDF&quot;</strong> o <strong>&quot;Exportar CSV&quot;</strong> para descargar instantáneamente el informe consolidado.</li>
+</ol>
+<h3>4.4. Gestión y Filtrado de Tickets</h3>
+<ol>
+<li>Diríjase a la sección <strong>&quot;Tickets&quot;</strong> desde el menú lateral o la barra de navegación.</li>
+<li><strong>Búsqueda Reactiva:</strong> Escriba en la caja de búsqueda cualquier término (identificador, título, asignado o estado). La tabla filtrará al instante respetando el debounce de 300ms.</li>
+<li><strong>Paginación:</strong> Utilice los controles numéricos inferiores para navegar entre páginas de resultados.</li>
+<li><strong>Creación de Tickets:</strong> Pulse el botón flotante <strong>&quot;+&quot;</strong> o <strong>&quot;Nuevo Ticket&quot;</strong> para desplegar el modal interactivo, complete la información técnica requerida y guarde los cambios.</li>
+</ol>
+<h3>4.5. Navegación por Teclado y Accesibilidad</h3>
+<ul>
+<li>La aplicación puede utilizarse íntegramente sin ratón:<ul>
+<li><code>Tab</code>: Avanza al siguiente elemento interactivo (inputs, botones, enlaces).</li>
+<li><code>Shift + Tab</code>: Retrocede al elemento anterior.</li>
+<li><code>Enter</code> / <code>Espacio</code>: Acciona botones, despliega menús y activa filas en la tabla.</li>
+<li><code>Escape</code>: Cierra modales y cancela búsquedas.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>💻 5. Comandos de Desarrollo, Compodoc y Producción</h2>
+<h3>Instalación de Dependencias</h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">npm install</code></pre></div><h3>Servidor de Desarrollo Local</h3>
+<p>Inicia el entorno de desarrollo local con recarga en caliente:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">npm start
+# o alternativamente: ng serve --open
+# Disponible en: http://localhost:4200</code></pre></div><h3>Generación de Documentación Técnica (Compodoc)</h3>
+<p>Genera el informe HTML interactivo con la documentación de todos los componentes, servicios y tipos:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash"># Generar documentación estática en carpeta documentation/
+npx &#64;compodoc/compodoc -p tsconfig.app.json --output documentation
+
+# Iniciar servidor local de visualización de Compodoc
+npm run compodoc
+# Disponible en: http://localhost:8080</code></pre></div><h3>Compilación y Bundle de Producción</h3>
+<p>Genera el paquete optimizado de producción en la carpeta <code>www/</code>:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">npm run build:prod
+# Realiza optimización AOT, minificación de CSS/JS y hashing de ficheros.</code></pre></div><hr>
+<h2>🌐 6. Despliegue en la Nube (Vercel)</h2>
+<p>El proyecto cuenta con un archivo <code>vercel.json</code> preconfigurado con reglas de reescritura para Single Page Applications (evitando errores 404 al refrescar rutas) y cabeceras de seguridad HTTP:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash"># Despliegue directo mediante Vercel CLI
+npx vercel --prod</code></pre></div><hr>
+<h2>📄 Licencia y Reconocimientos</h2>
+<p>Proyecto desarrollado bajo fines estrictamente académicos para la superación con máxima calificación del módulo <strong>Desarrollo de Interfaces (Código: 0488)</strong> en el <strong>2º Grado Superior en Desarrollo de Aplicaciones Multiplataforma (DAM)</strong> del <strong>Instituto Nebrija de Formación Profesional</strong>.</p>
+<p><strong>Autor:</strong> Luis Lázaro Pimentel<br><em>Curso Académico 2025 – 2026</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 0;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'readme';
+            var COMPODOC_CURRENT_PAGE_URL = 'index.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var updateDarkModeSwitchOffset = function () {
+                    var content = document.querySelector('.content');
+                    var scrollbarWidth = 0;
+
+                    if (content) {
+                         scrollbarWidth = Math.max(0, content.offsetWidth - content.clientWidth);
+                    }
+
+                    document.documentElement.style.setProperty(
+                         '--content-scrollbar-width',
+                         scrollbarWidth + 'px'
+                    );
+               };
+
+               updateDarkModeSwitchOffset();
+               requestAnimationFrame(updateDarkModeSwitchOffset);
+               window.addEventListener('resize', updateDarkModeSwitchOffset);
+
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
+       <script src="./js/libs/custom-elements.min.js"></script>
+       <script src="./js/libs/lit-html.js"></script>
+
+       <script src="./js/menu-wc.js" defer></script>
+
+       <script src="./js/libs/bootstrap-native.js"></script>
+
+       <script src="./js/libs/es6-shim.min.js"></script>
+       <script src="./js/libs/EventDispatcher.js"></script>
+       <script src="./js/libs/promise.min.js"></script>
+
+       <script src="./js/compodoc.js"></script>
+
+       <script src="./js/tabs.js"></script>
+       <script src="./js/menu.js"></script>
+       <script src="./js/libs/clipboard.min.js"></script>
+       <script src="./js/libs/prism.js"></script>
+       <script src="./js/sourceCode.js"></script>
+          <script src="./js/search/search.js"></script>
+          <script src="./js/search/lunr.min.js"></script>
+          <script src="./js/search/search-lunr.js"></script>
+          <script src="./js/search/search_index.js"></script>
+       <script src="./js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>
