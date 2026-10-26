@@ -1,0 +1,138 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar class="header-toolbar">
+    <ion-title>
+      <div class="brand-title">
+        <ion-icon name="book-outline" class="brand-icon"></ion-icon>
+        <span class="brand-google">Google</span>
+        <span class="brand-sub">Books API Explorer</span>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" class="theme-toggle-btn">
+        <ion-icon slot="icon-only" [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" routerLink="/about" class="nav-shortcut-btn">
+        <ion-icon slot="start" name="business-outline"></ion-icon>
+        About
+      </ion-button>
+      <ion-button fill="clear" routerLink="/productos" class="nav-shortcut-btn highlight-shortcut">
+        <ion-icon slot="start" name="library-outline"></ion-icon>
+        Catálogo
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="inicio-content">
+  <div class="page-container">
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>DAM2 · Desarrollo de Interfaces</span>
+      </div>
+
+      <h1 class="hero-title">
+        Explora la Biblioteca Digital con
+        <span class="gradient-text">Google Books REST API</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Aplicación SPA desarrollada con <strong>Angular Standalone</strong> e <strong>Ionic Framework</strong>. 
+        Evolución de la práctica original hacia el ecosistema público de Google Books, implementando 
+        inyección con <code>inject()</code>, nuevo control flow nativo (<code>&#64;if</code>, <code>&#64;for</code>), 
+        dimensiones físicas y métricas de stock valorado.
+      </p>
+
+      <!-- Los dos botones de navegación principales requeridos por el cliente -->
+      <div class="hero-actions">
+        <ion-button routerLink="/productos" shape="round" class="cta-primary-btn">
+          <ion-icon slot="start" name="library-outline"></ion-icon>
+          Explorar Catálogo de Productos
+          <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>
+        </ion-button>
+
+        <ion-button routerLink="/about" shape="round" fill="outline" class="cta-about-btn">
+          <ion-icon slot="start" name="business-outline"></ion-icon>
+          Acerca de la Consultora (About)
+        </ion-button>
+      </div>
+
+      <!-- Quick Tech Chips -->
+      <div class="tech-chips-wrapper">
+        <ion-chip class="custom-chip angular-chip">
+          <ion-icon name="code-slash-outline"></ion-icon>
+          <ion-label>Angular Standalone (Sin AppModule)</ion-label>
+        </ion-chip>
+        <ion-chip class="custom-chip ionic-chip">
+          <ion-icon name="layers-outline"></ion-icon>
+          <ion-label>Ionic Standalone Components</ion-label>
+        </ion-chip>
+        <ion-chip class="custom-chip http-chip">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <ion-label>provideHttpClient() & inject()</ion-label>
+        </ion-chip>
+        <ion-chip class="custom-chip vercel-chip">
+          <ion-icon name="globe-outline"></ion-icon>
+          <ion-label>Vercel SPA Rewrites</ion-label>
+        </ion-chip>
+      </div>
+    </section>
+
+    <!-- Architecture & Features Grid -->
+    <section class="features-section">
+      <div class="section-header">
+        <h2 class="section-title">Pilares de Arquitectura Técnica</h2>
+        <p class="section-subtitle">Diseño desacoplado, modular y conforme a los estándares de desarrollo frontend modernos.</p>
+      </div>
+
+      <div class="features-grid">
+        @for (feature of techFeatures; track feature.title) {
+          <ion-card class="feature-card">
+            <ion-card-header>
+              <div class="card-icon-wrapper" [style.background-color]="feature.color + '15'" [style.color]="feature.color">
+                <ion-icon [name]="feature.icon"></ion-icon>
+              </div>
+              <div class="card-meta">
+                <ion-badge [style.background-color]="feature.color" class="feature-badge">{{ feature.badge }}</ion-badge>
+                <ion-card-title class="feature-title">{{ feature.title }}</ion-card-title>
+              </div>
+            </ion-card-header>
+            <ion-card-content class="feature-description">
+              {{ feature.description }}
+            </ion-card-content>
+          </ion-card>
+        }
+      </div>
+    </section>
+
+    <!-- Info Box: Vercel SPA Ready -->
+    <section class="banner-section">
+      <div class="info-banner">
+        <div class="banner-icon">
+          <ion-icon name="hardware-chip-outline"></ion-icon>
+        </div>
+        <div class="banner-text">
+          <h3>Rutas SPA y Despliegue sin Errores 404</h3>
+          <p>
+            Incluye la configuración <code>vercel.json</code> con reescritura hacia <code>/index.html</code>, 
+            garantizando que rutas directas como <code>/libros</code> o <code>/inicio</code> se resuelvan fluidamente 
+            en servidores en la nube sin recargas fallidas.
+          </p>
+        </div>
+        <div class="banner-action">
+          <ion-button fill="outline" color="light" routerLink="/libros">
+            Ver Demo en Vivo
+          </ion-button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+      <p>Práctica de Desarrollo de Interfaces · DAM2 · Integración Google Books API</p>
+    </footer>
+
+  </div>
+</ion-content>

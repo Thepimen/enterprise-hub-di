@@ -1,0 +1,458 @@
+.header-toolbar {
+  --background: rgba(18, 18, 24, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.5rem;
+
+  .back-home-btn {
+    --color: #8ab4f8;
+    font-weight: 600;
+
+    .btn-label {
+      margin-left: 0.25rem;
+    }
+  }
+
+  .catalog-nav-btn {
+    --color: #bdc1c6;
+    font-weight: 500;
+
+    @media (max-width: 600px) {
+      .btn-label-desktop {
+        display: none;
+      }
+    }
+  }
+}
+
+.toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .brand-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #ffffff;
+  }
+
+  .badge-consultancy {
+    --background: rgba(66, 133, 244, 0.2);
+    --color: #8ab4f8;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(66, 133, 244, 0.4);
+  }
+}
+
+.about-content {
+  --background: #0f1015;
+  color: #e8eaed;
+}
+
+.about-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem 1.25rem;
+}
+
+/* Corporate Hero */
+.corporate-hero {
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto 3rem auto;
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 9999px;
+    background: rgba(66, 133, 244, 0.12);
+    border: 1px solid rgba(66, 133, 244, 0.3);
+    color: #8ab4f8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+
+    .tag-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34a853;
+      box-shadow: 0 0 8px #34a853;
+    }
+  }
+
+  .hero-headline {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.2;
+    color: #ffffff;
+    margin: 0 0 1.25rem 0;
+    letter-spacing: -0.02em;
+
+    .gradient-accent {
+      background: linear-gradient(135deg, #4285f4 0%, #a142f4 50%, #ea4335 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+  }
+
+  .hero-lead {
+    font-size: 1.12rem;
+    line-height: 1.7;
+    color: #bdc1c6;
+    margin: 0 auto 2rem auto;
+
+    strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+  }
+
+  .hero-badges-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+
+    .tag-chip {
+      --background: rgba(255, 255, 255, 0.04);
+      --color: #e8eaed;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+
+      ion-icon {
+        color: #8ab4f8;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+/* GitHub Featured Section */
+.github-featured-section {
+  margin-bottom: 3rem;
+
+  .github-card {
+    background: linear-gradient(135deg, rgba(30, 33, 48, 0.85) 0%, rgba(20, 22, 32, 0.95) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    margin: 0;
+  }
+
+  .github-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 2rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+      gap: 1.25rem;
+    }
+  }
+
+  .github-icon-box {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 2.75rem;
+      color: #ffffff;
+    }
+  }
+
+  .github-text-content {
+    flex: 1;
+
+    .github-header-sub {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+
+      @media (max-width: 768px) {
+        justify-content: center;
+      }
+
+      .github-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 4px;
+        padding: 0.2rem 0.5rem;
+      }
+
+      .github-user-tag {
+        font-size: 0.85rem;
+        color: #8ab4f8;
+        font-family: monospace;
+      }
+    }
+
+    .github-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .github-description {
+      font-size: 0.95rem;
+      color: #bdc1c6;
+      line-height: 1.5;
+      margin: 0;
+    }
+  }
+
+  .github-cta-box {
+    flex-shrink: 0;
+
+    .github-external-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 12px;
+      background: #24292e;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: all 0.25s ease;
+
+      ion-icon {
+        font-size: 1.25rem;
+      }
+
+      .external-icon {
+        font-size: 0.95rem;
+        opacity: 0.7;
+      }
+
+      &:hover {
+        background: #2ea44f;
+        border-color: #2ea44f;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(46, 164, 79, 0.4);
+      }
+    }
+  }
+}
+
+/* Metrics Grid Section */
+.metrics-grid-section {
+  margin-bottom: 3.5rem;
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 500px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .metric-card {
+    background: rgba(26, 28, 38, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      border-color: rgba(66, 133, 244, 0.4);
+    }
+
+    .metric-number {
+      display: block;
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #8ab4f8;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+    }
+
+    .metric-title {
+      display: block;
+      font-size: 0.95rem;
+      color: #ffffff;
+      margin-bottom: 0.35rem;
+    }
+
+    .metric-caption {
+      font-size: 0.8rem;
+      color: #9aa0a6;
+      margin: 0;
+      line-height: 1.35;
+    }
+  }
+}
+
+/* Competencies Section */
+.competencies-section {
+  margin-bottom: 3.5rem;
+
+  .section-heading {
+    text-align: center;
+    margin-bottom: 2rem;
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .section-subtitle {
+      font-size: 0.95rem;
+      color: #9aa0a6;
+      margin: 0;
+    }
+  }
+
+  .competencies-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .competency-card {
+    background: rgba(26, 28, 38, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    margin: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    ion-card-header {
+      padding: 1.25rem 1.25rem 0.5rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .comp-icon-box {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      ion-icon {
+        font-size: 1.5rem;
+      }
+    }
+
+    .comp-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    ion-card-content {
+      padding: 0.75rem 1.25rem 1.25rem 1.25rem;
+
+      .comp-description {
+        font-size: 0.9rem;
+        line-height: 1.55;
+        color: #bdc1c6;
+        margin: 0;
+      }
+    }
+  }
+}
+
+/* Footer Section */
+.action-footer-section {
+  .action-footer-card {
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(161, 66, 244, 0.08) 100%);
+    border: 1px solid rgba(66, 133, 244, 0.25);
+    border-radius: 20px;
+    padding: 2.25rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .footer-prompt {
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 0.35rem 0;
+      }
+
+      p {
+        font-size: 0.92rem;
+        color: #bdc1c6;
+        margin: 0;
+      }
+    }
+
+    .footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+
+      @media (max-width: 768px) {
+        justify-content: center;
+        width: 100%;
+
+        .footer-btn {
+          width: 100%;
+        }
+      }
+
+      .footer-btn {
+        font-weight: 600;
+      }
+    }
+  }
+}
