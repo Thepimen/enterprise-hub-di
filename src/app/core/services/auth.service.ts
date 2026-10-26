@@ -1,7 +1,8 @@
 /**
  * @file auth.service.ts
- * @description Servicio de autenticación reactivo con Angular Signals y persistencia en Web Storage API (sessionStorage).
- * Implementa validación de credenciales multinivel ('admin' | 'user') conforme al laboratorio de Control de Acceso (Módulo 0488).
+ * @description Servicio central de autenticación reactiva con Angular Signals, persistencia en
+ * Web Storage API (sessionStorage: 'DAM2_AUTH_SESSION'), auditoría de eventos RBAC en vivo
+ * y gestor reactivo de tema visual (Modo Oscuro NOC / Modo Claro Editorial).
  */
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -10,12 +11,21 @@ import { delay, tap } from 'rxjs/operators';
 import { RegisterPayload, AuthResponse } from '../models/auth.model';
 
 /**
- * Interfaz estricta de sesión de usuario (Práctica de Laboratorio - Módulo 0488).
+ * Interfaz oficial de sesión de usuario (Práctica de Laboratorio - Módulo 0488).
  */
 export interface UserSession {
   username: string;
   role: 'admin' | 'user';
   isAuthenticated: boolean;
+}
+
+/** Entrada del registro de auditoría de seguridad en tiempo real */
+export interface SecurityAuditEntry {
+  id: string;
+  timestamp: string;
+  type: 'AUTH' | 'GUARD' | 'STORAGE' | 'SYSTEM';
+  level: 'INFO' | 'WARN' | 'SUCCESS';
+  message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +43,61 @@ export class AuthService {
 
   /** Selector computado reactivo de estado de autenticación */
   public isAuthenticated = computed(() => this._currentUser()?.isAuthenticated ?? false);
+
+  /** Signal reactivo del tema visual ('dark' NOC Obsidian por defecto | 'light' Editorial) */
+  public theme = signal<'dark' | 'light'>('dark');
+
+  /** Stream reactivo de eventos de auditoría RBAC y sistema */
+  private _auditLogs = signal<SecurityAuditEntry[]>([
+    {
+      id: 'evt-01',
+      timestamp: new Date().toLocaleTimeString('es-ES'),
+      type: 'STORAGE',
+      level: 'INFO',
+      message: 'Inicializado motor Web Storage API (sessionStorage: DAM2_AUTH_SESSION)',
+    },
+    {
+      id: 'evt-02',
+      timestamp: new Date().toLocaleTimeString('es-ES'),
+      type: 'GUARD',
+      level: 'SUCCESS',
+      message: 'Functional Guards activas: authGuard + factoría roleGuard(admin | user)',
+    },
+  ]);
+
+  public auditLogs = this._auditLogs.asReadonly();
+
+  constructor() {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', this.theme());
+    }
+  }
+
+  /** Alterna en vivo entre el tema Oscuro NOC y el tema Claro Editorial */
+  toggleTheme(): void {
+    const next = this.theme() === 'dark' ? 'light' : 'dark';
+    this.theme.set(next);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', next);
+    }
+    this.recordAudit('SYSTEM', 'INFO', `Tema visual conmutado a modo ${next.toUpperCase()}`);
+  }
+
+  /** Registra un evento en la consola de auditoría en tiempo real */
+  recordAudit(
+    type: SecurityAuditEntry['type'],
+    level: SecurityAuditEntry['level'],
+    message: string
+  ): void {
+    const entry: SecurityAuditEntry = {
+      id: `evt-${Date.now()}-${Math.floor(Math.random() * 100)}`,
+      timestamp: new Date().toLocaleTimeString('es-ES'),
+      type,
+      level,
+      message,
+    };
+    this._auditLogs.update((list) => [entry, ...list.slice(0, 14)]);
+  }
 
   /**
    * Lee y valida la sesión almacenada en sessionStorage al inicializar el servicio.
@@ -70,11 +135,7 @@ export class AuthService {
    * Autenticación síncrona multinivel (Laboratorio Módulo 0488):
    * - 'admin' / '123' ➔ rol 'admin'
    * - 'operador' / '123' ➔ rol 'user'
-   * - Compatibilidad extendida con cuentas corporativas demo ('admin@enterprise.io' / 'Admin123!' y 'user@enterprise.io' / 'User123!')
-   *
-   * @param user Nombre de usuario o correo electrónico
-   * @param pass Contraseña
-   * @returns true si las credenciales son válidas, false en caso contrario
+   * - Compatibilidad con 'admin@enterprise.io' / 'Admin123!' y 'user@enterprise.io' / 'User123!'
    */
   login(user: string, pass: string): boolean {
     const normalizedUser = (user ?? '').trim();
@@ -98,6 +159,7 @@ export class AuthService {
     }
 
     if (!resolvedRole) {
+      this.recordAudit('AUTH', 'WARN', `Intento de login fallido para usuario '${normalizedUser || 'vacío'}'`);
       return false;
     }
 
@@ -111,6 +173,11 @@ export class AuthService {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
     }
+    this.recordAudit(
+      'AUTH',
+      'SUCCESS',
+      `Signal _currentUser actualizado: { username: '${resolvedUsername}', role: '${resolvedRole}' } persistido en sessionStorage`
+    );
     return true;
   }
 
@@ -137,6 +204,7 @@ export class AuthService {
         if (typeof sessionStorage !== 'undefined') {
           sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(res.user));
         }
+        this.recordAudit('AUTH', 'SUCCESS', `Nuevo operador registrado: ${res.user.username} (rol: user)`);
       })
     );
   }
@@ -145,10 +213,12 @@ export class AuthService {
    * Cierra la sesión activa eliminando la clave de sessionStorage y limpiando el Signal reactivo.
    */
   logout(): void {
+    const prevUser = this._currentUser()?.username ?? 'sesión';
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(this.STORAGE_KEY);
     }
     this._currentUser.set(null);
+    this.recordAudit('AUTH', 'INFO', `Logout ejecutado para '${prevUser}'. Clave DAM2_AUTH_SESSION eliminada.`);
     this.router.navigate(['/login']);
   }
 }
