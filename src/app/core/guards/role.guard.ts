@@ -1,32 +1,32 @@
 /**
  * @file role.guard.ts
- * @description Guard funcional que restringe rutas exclusivas para el rol ADMIN.
- * Redirige a /tickets si el usuario autenticado no tiene rol de administrador.
+ * @description Factoría funcional de control de acceso granular basado en roles (RBAC).
+ * Evalúa el signal authService.currentUser() y deniega el acceso redirigiendo atómicamente con UrlTree.
  */
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
-/**
- * Guard funcional de rol ADMIN.
- * Requiere que el usuario esté autenticado Y tenga rol 'ADMIN'.
- */
-export const roleGuard: CanActivateFn = (_route, _state) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
+export const roleGuard = (allowedRole: 'admin' | 'user'): CanActivateFn => {
+  return (_route, _state) => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
 
-  return authService.state$.pipe(
-    take(1),
-    map((state) => {
-      if (!state.isAuthenticated) {
-        return router.createUrlTree(['/login']);
-      }
-      if (state.user?.role === 'ADMIN') {
-        return true;
-      }
-      // Usuario sin rol ADMIN: redirige a tickets (acceso permitido)
-      return router.createUrlTree(['/tickets']);
-    })
-  );
+    if (!authService.isAuthenticated()) {
+      return router.createUrlTree(['/login']);
+    }
+
+    const session = authService.currentUser();
+
+    if (session?.role === allowedRole) {
+      return true;
+    }
+
+    // Si un usuario 'user' intenta acceder a ruta de 'admin', redirige atómicamente a '/user-dashboard'
+    // Si un 'admin' intenta acceder a ruta exclusiva de 'user', redirige a '/admin'
+    if (session?.role === 'admin') {
+      return router.createUrlTree(['/admin']);
+    }
+    return router.createUrlTree(['/user-dashboard']);
+  };
 };

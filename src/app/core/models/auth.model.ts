@@ -1,16 +1,26 @@
 /**
  * @file auth.model.ts
- * @description Modelos de dominio para autenticación y gestión de usuarios.
- * Utilizado por AuthService, Guards y componentes de Login/Register.
+ * @description Modelos de dominio para autenticación, gestión de sesiones RBAC y señales reactivas.
+ * Utilizado por AuthService, Functional Guards (authGuard, roleGuard) y vistas protegidas.
  */
 
-/** Roles disponibles en el sistema */
-export type UserRole = 'ADMIN' | 'USER';
+/**
+ * Interfaz oficial de sesión de usuario para Control de Acceso y Functional Guards (Módulo 0488).
+ */
+export interface UserSession {
+  username: string;
+  role: 'admin' | 'user';
+  isAuthenticated: boolean;
+}
 
-/** Modelo principal de usuario autenticado */
+/** Roles disponibles en el sistema */
+export type UserRole = 'admin' | 'user' | 'ADMIN' | 'USER';
+
+/** Modelo extendido de usuario autenticado */
 export interface User {
   id: string;
   name: string;
+  username?: string;
   email: string;
   role: UserRole;
   avatar?: string;
@@ -20,7 +30,8 @@ export interface User {
 
 /** Payload de credenciales para login */
 export interface LoginCredentials {
-  email: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 
@@ -34,16 +45,7 @@ export interface RegisterPayload {
 
 /** Respuesta de la API de autenticación */
 export interface AuthResponse {
-  user: User;
+  user: UserSession;
   token: string;
   expiresAt: number;
-}
-
-/** Estado global de autenticación almacenado en BehaviorSubject */
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
 }

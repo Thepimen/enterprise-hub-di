@@ -1,210 +1,154 @@
 /**
  * @file auth.service.ts
- * @description Servicio de autenticación con gestión de roles y persistencia en localStorage.
- * Implementa BehaviorSubject para estado reactivo global de sesión.
+ * @description Servicio de autenticación reactivo con Angular Signals y persistencia en Web Storage API (sessionStorage).
+ * Implementa validación de credenciales multinivel ('admin' | 'user') conforme al laboratorio de Control de Acceso (Módulo 0488).
  */
-import { Injectable, inject } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, map, tap } from 'rxjs/operators';
-import {
-  User,
-  UserRole,
-  LoginCredentials,
-  RegisterPayload,
-  AuthResponse,
-  AuthState
-} from '../models/auth.model';
+import { Observable, of } from 'rxjs';
+import { delay, tap } from 'rxjs/operators';
+import { RegisterPayload, AuthResponse } from '../models/auth.model';
 
-/** Clave de almacenamiento en localStorage */
-const STORAGE_KEY = 'enterprise_hub_auth';
-
-/** Usuarios preconfigurados del sistema */
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id: 'usr-001',
-    name: 'Administrador Sistema',
-    email: 'admin@enterprise.io',
-    password: 'Admin123!',
-    role: 'ADMIN',
-    avatar: 'person-circle-outline',
-    createdAt: new Date('2024-01-01'),
-    lastLogin: new Date(),
-  },
-  {
-    id: 'usr-002',
-    name: 'Usuario Operaciones',
-    email: 'user@enterprise.io',
-    password: 'User123!',
-    role: 'USER',
-    avatar: 'person-outline',
-    createdAt: new Date('2024-03-15'),
-    lastLogin: new Date(),
-  },
-];
+/**
+ * Interfaz estricta de sesión de usuario (Práctica de Laboratorio - Módulo 0488).
+ */
+export interface UserSession {
+  username: string;
+  role: 'admin' | 'user';
+  isAuthenticated: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
 
-  /** Estado inicial de autenticación */
-  private readonly initialState: AuthState = {
-    user: null,
-    token: null,
-    isAuthenticated: false,
-    loading: false,
-    error: null,
-  };
+  /** Clave constante en sessionStorage (Web Storage API) */
+  private readonly STORAGE_KEY = 'DAM2_AUTH_SESSION';
 
-  /** BehaviorSubject con el estado global de autenticación */
-  private readonly authState$ = new BehaviorSubject<AuthState>(this.initialState);
+  /** Signal privado con el estado reactivo de la sesión actual */
+  private _currentUser = signal<UserSession | null>(this.readSessionFromStorage());
 
-  /** BehaviorSubject reactivo con el usuario actual de sesión (requisito RA 1 y RA 2) */
-  readonly user$ = new BehaviorSubject<User | null>(null);
+  /** Selector público de solo lectura de la sesión actual */
+  public currentUser = this._currentUser.asReadonly();
 
-  /** Observable público del estado (solo lectura) */
-  readonly state$ = this.authState$.asObservable();
+  /** Selector computado reactivo de estado de autenticación */
+  public isAuthenticated = computed(() => this._currentUser()?.isAuthenticated ?? false);
 
-  /** Observable del usuario actual */
-  readonly currentUser$ = this.user$.asObservable();
-
-  /** Observable del estado de carga */
-  readonly isLoading$ = this.authState$.pipe(map((s) => s.loading));
-
-  constructor() {
-    this.restoreSession();
-  }
-
-  /** Restaura la sesión persistida en localStorage al recargar */
-  private restoreSession(): void {
+  /**
+   * Lee y valida la sesión almacenada en sessionStorage al inicializar el servicio.
+   * Si el JSON está corrupto o es inválido, limpia la clave de forma segura.
+   */
+  private readSessionFromStorage(): UserSession | null {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: AuthResponse = JSON.parse(stored);
-        if (parsed.expiresAt > Date.now()) {
-          const restoredUser: User = { ...parsed.user, createdAt: new Date(parsed.user.createdAt) };
-          this.user$.next(restoredUser);
-          this.authState$.next({
-            user: restoredUser,
-            token: parsed.token,
-            isAuthenticated: true,
-            loading: false,
-            error: null,
-          });
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
-          this.user$.next(null);
-        }
+      if (typeof sessionStorage === 'undefined') {
+        return null;
       }
+      const raw = sessionStorage.getItem(this.STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw) as UserSession;
+      if (
+        parsed &&
+        typeof parsed.username === 'string' &&
+        (parsed.role === 'admin' || parsed.role === 'user') &&
+        typeof parsed.isAuthenticated === 'boolean'
+      ) {
+        return parsed;
+      }
+      sessionStorage.removeItem(this.STORAGE_KEY);
+      return null;
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(this.STORAGE_KEY);
+      }
+      return null;
     }
-  }
-
-  /** Obtiene el estado actual de autenticación (snapshot) */
-  get currentState(): AuthState {
-    return this.authState$.getValue();
-  }
-
-  /** Obtiene el usuario actual (snapshot) */
-  get currentUser(): User | null {
-    return this.authState$.getValue().user;
-  }
-
-  /** Verifica si el usuario tiene un rol específico */
-  hasRole(role: UserRole): boolean {
-    return this.currentUser?.role === role;
   }
 
   /**
-   * Realiza el login con validación mock y retraso simulado de red (400ms).
-   * @param credentials - Email y contraseña del usuario
-   * @returns Observable con la respuesta de autenticación
+   * Autenticación síncrona multinivel (Laboratorio Módulo 0488):
+   * - 'admin' / '123' ➔ rol 'admin'
+   * - 'operador' / '123' ➔ rol 'user'
+   * - Compatibilidad extendida con cuentas corporativas demo ('admin@enterprise.io' / 'Admin123!' y 'user@enterprise.io' / 'User123!')
+   *
+   * @param user Nombre de usuario o correo electrónico
+   * @param pass Contraseña
+   * @returns true si las credenciales son válidas, false en caso contrario
    */
-  login(credentials: LoginCredentials): Observable<AuthResponse> {
-    this.authState$.next({ ...this.currentState, loading: true, error: null });
+  login(user: string, pass: string): boolean {
+    const normalizedUser = (user ?? '').trim();
+    const normalizedPass = (pass ?? '').trim();
 
-    const found = MOCK_USERS.find(
-      (u) => u.email === credentials.email && u.password === credentials.password
-    );
+    let resolvedRole: 'admin' | 'user' | null = null;
+    let resolvedUsername = normalizedUser;
 
-    if (!found) {
-      return throwError(() => new Error('Credenciales incorrectas. Verifique email y contraseña.')).pipe(
-        tap(() => {
-          this.authState$.next({
-            ...this.currentState,
-            loading: false,
-            error: 'Credenciales incorrectas.',
-          });
-        })
-      );
+    if (normalizedUser === 'admin' && normalizedPass === '123') {
+      resolvedRole = 'admin';
+      resolvedUsername = 'admin';
+    } else if (normalizedUser === 'operador' && normalizedPass === '123') {
+      resolvedRole = 'user';
+      resolvedUsername = 'operador';
+    } else if (normalizedUser.toLowerCase() === 'admin@enterprise.io' && normalizedPass === 'Admin123!') {
+      resolvedRole = 'admin';
+      resolvedUsername = 'admin';
+    } else if (normalizedUser.toLowerCase() === 'user@enterprise.io' && normalizedPass === 'User123!') {
+      resolvedRole = 'user';
+      resolvedUsername = 'operador';
     }
 
-    const { password: _pw, ...userWithoutPassword } = found;
-    const response: AuthResponse = {
-      user: { ...userWithoutPassword, lastLogin: new Date() },
-      token: `mock-jwt-${userWithoutPassword.id}-${Date.now()}`,
-      expiresAt: Date.now() + 8 * 60 * 60 * 1000, // 8 horas
+    if (!resolvedRole) {
+      return false;
+    }
+
+    const sessionData: UserSession = {
+      username: resolvedUsername,
+      role: resolvedRole,
+      isAuthenticated: true,
     };
 
-    return of(response).pipe(
-      delay(400),
-      tap((res) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res));
-        this.user$.next(res.user);
-        this.authState$.next({
-          user: res.user,
-          token: res.token,
-          isAuthenticated: true,
-          loading: false,
-          error: null,
-        });
-      })
-    );
+    this._currentUser.set(sessionData);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
+    }
+    return true;
   }
 
   /**
-   * Registra un nuevo usuario (mock - no persiste entre sesiones en esta demo).
+   * Registro de nuevo operador (asigna rol 'user' y persiste en sessionStorage).
    */
   register(payload: RegisterPayload): Observable<AuthResponse> {
-    this.authState$.next({ ...this.currentState, loading: true, error: null });
-
-    const newUser: User = {
-      id: `usr-${Date.now()}`,
-      name: payload.name,
-      email: payload.email,
-      role: 'USER',
-      avatar: 'person-outline',
-      createdAt: new Date(),
+    const sessionData: UserSession = {
+      username: payload.name || payload.email.split('@')[0] || 'operador',
+      role: 'user',
+      isAuthenticated: true,
     };
 
     const response: AuthResponse = {
-      user: newUser,
-      token: `mock-jwt-${newUser.id}-${Date.now()}`,
+      user: sessionData,
+      token: `mock-jwt-${Date.now()}`,
       expiresAt: Date.now() + 8 * 60 * 60 * 1000,
     };
 
     return of(response).pipe(
-      delay(600),
+      delay(350),
       tap((res) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res));
-        this.user$.next(res.user);
-        this.authState$.next({
-          user: res.user,
-          token: res.token,
-          isAuthenticated: true,
-          loading: false,
-          error: null,
-        });
+        this._currentUser.set(res.user);
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(res.user));
+        }
       })
     );
   }
 
-  /** Cierra la sesión y redirige al login */
+  /**
+   * Cierra la sesión activa eliminando la clave de sessionStorage y limpiando el Signal reactivo.
+   */
   logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
-    this.user$.next(null);
-    this.authState$.next(this.initialState);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(this.STORAGE_KEY);
+    }
+    this._currentUser.set(null);
     this.router.navigate(['/login']);
   }
 }
