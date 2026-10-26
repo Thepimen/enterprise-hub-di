@@ -1,8 +1,11 @@
 /**
  * @file dashboard.page.ts
- * @description Dashboard exclusivo ADMIN con KPIs, gráficos Chart.js y exportación.
- * Utiliza forkJoin para carga paralela de datos SQL + NoSQL.
- * Implementa dos gráficos Chart.js: barras (rendimiento) y doughnut (tickets).
+ * @description Dashboard de operaciones e infraestructura empresarial.
+ * Refactorizado según las directrices de diseño Taste Skill:
+ * - Eliminación total de gráficos de barras en favor de gráficos de telemetría de líneas de alta precisión
+ * - Paleta sin degradados estridentes, tipografía sobria con cifras tabulares
+ * - Anillo geométrico refinado para incidencias y KPIs tipográficos
+ * - Carga concurrente con forkJoin (SQL relacional + NoSQL telemetría) y exportación PDF/CSV
  */
 import {
   Component, OnInit, OnDestroy, AfterViewInit,
@@ -15,8 +18,7 @@ import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-  IonMenuButton, IonButton, IonIcon, IonSpinner, IonGrid,
-  IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
+  IonMenuButton, IonButton, IonIcon, IonSpinner,
   IonRefresher, IonRefresherContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -24,7 +26,7 @@ import {
   refreshOutline, downloadOutline, documentTextOutline,
   serverOutline, alertCircleOutline, checkmarkCircleOutline,
   timerOutline, statsChartOutline, cloudDownloadOutline,
-  menuOutline, trendingUpOutline
+  menuOutline, trendingUpOutline, pulseOutline, hardwareChipOutline
 } from 'ionicons/icons';
 import Chart from 'chart.js/auto';
 import { SqlMockService } from '../../core/services/sql-mock.service';
@@ -39,7 +41,7 @@ import { Ticket } from '../../core/models/ticket.model';
 addIcons({
   refreshOutline, downloadOutline, documentTextOutline, serverOutline,
   alertCircleOutline, checkmarkCircleOutline, timerOutline, statsChartOutline,
-  cloudDownloadOutline, menuOutline, trendingUpOutline
+  cloudDownloadOutline, menuOutline, trendingUpOutline, pulseOutline, hardwareChipOutline
 });
 
 @Component({
@@ -49,20 +51,19 @@ addIcons({
   imports: [
     CommonModule, MetricCardComponent,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-    IonMenuButton, IonButton, IonIcon, IonSpinner, IonGrid,
-    IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
+    IonMenuButton, IonButton, IonIcon, IonSpinner,
     IonRefresher, IonRefresherContent,
   ],
   template: `
     <ion-header [translucent]="true">
-      <ion-toolbar>
+      <ion-toolbar class="app-toolbar">
         <ion-buttons slot="start">
           <ion-menu-button aria-label="Abrir menú de navegación"></ion-menu-button>
         </ion-buttons>
         <ion-title>
           <span class="toolbar-title">
-            <ion-icon name="stats-chart-outline" aria-hidden="true"></ion-icon>
-            Dashboard
+            <span class="toolbar-brand-dot"></span>
+            Consola Operativa
           </span>
         </ion-title>
         <ion-buttons slot="end">
@@ -71,7 +72,8 @@ addIcons({
             [disabled]="isLoading"
             fill="clear"
             aria-label="Actualizar datos del dashboard"
-            title="Actualizar"
+            title="Sincronizar telemetría"
+            class="header-refresh-btn"
           >
             <ion-icon name="refresh-outline" [class.spin]="isLoading" aria-hidden="true"></ion-icon>
           </ion-button>
@@ -80,7 +82,6 @@ addIcons({
     </ion-header>
 
     <ion-content [fullscreen]="true">
-      <!-- Pull-to-refresh accesible -->
       <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)" aria-label="Desliza para actualizar">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
@@ -90,142 +91,189 @@ addIcons({
         <!-- Loading skeleton -->
         <div *ngIf="isLoading" class="loading-overlay" role="status" aria-live="polite" aria-label="Cargando datos del dashboard">
           <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-          <p>Cargando infraestructura...</p>
+          <p class="loading-text">Sincronizando telemetría de clústeres...</p>
         </div>
 
         <ng-container *ngIf="!isLoading">
 
-          <!-- Cabecera de bienvenida -->
-          <section class="dashboard-welcome" aria-label="Bienvenida">
-            <div class="welcome-text">
-              <h1 class="welcome-title">
-                Bienvenido, {{ userName }}
-                <span class="admin-badge" aria-label="Rol Administrador">ADMIN</span>
-              </h1>
-              <p class="welcome-sub">
-                <ion-icon name="timer-outline" aria-hidden="true"></ion-icon>
-                Última actualización: {{ lastUpdate | date:'HH:mm:ss' }}
+          <!-- Cabecera de consola operativa (Anti-slop: informativa, sin saludos vacíos) -->
+          <header class="dashboard-header" aria-label="Resumen operativo">
+            <div class="header-identity">
+              <div class="header-breadcrumbs">
+                <span class="bc-root">Infraestructura</span>
+                <span class="bc-sep">/</span>
+                <span class="bc-current">Supervisión en vivo</span>
+              </div>
+              <h1 class="header-title">Monitor de Clúster & Operaciones</h1>
+              <p class="header-subtitle">
+                <span class="live-indicator">
+                  <span class="live-dot" aria-hidden="true"></span>
+                  Conexión activa
+                </span>
+                <span class="meta-sep">•</span>
+                <span class="meta-time">Último paquete: {{ lastUpdate | date:'HH:mm:ss' }}</span>
+                <span class="meta-sep">•</span>
+                <span class="meta-user">Operador: {{ userName }}</span>
               </p>
             </div>
-            <div class="export-actions" role="group" aria-label="Acciones de exportación">
-              <ion-button
-                fill="outline"
-                size="small"
+
+            <div class="header-actions" role="group" aria-label="Acciones de exportación">
+              <button
+                class="action-btn"
                 (click)="exportCsv()"
                 [disabled]="isExporting"
                 aria-label="Exportar datos a CSV"
+                title="Descargar datos en formato CSV"
               >
-                <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
-                CSV
-              </ion-button>
-              <ion-button
-                fill="solid"
-                size="small"
+                <ion-icon name="download-outline" aria-hidden="true"></ion-icon>
+                <span>CSV</span>
+              </button>
+              <button
+                class="action-btn action-btn--primary"
                 (click)="exportPdf()"
                 [disabled]="isExporting"
                 aria-label="Exportar reporte a PDF"
+                title="Generar informe en PDF"
               >
-                <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
-                PDF
-              </ion-button>
+                <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+                <span>Informe PDF</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- KPIs Grid (Taste Skill: tipografía, datos tabulares, sin cajas con iconos de colores) -->
+          <section class="kpis-section" aria-label="Indicadores clave de rendimiento">
+            <h2 class="section-heading sr-only">KPIs de Rendimiento</h2>
+            <div class="kpi-grid">
+              <app-metric-card
+                *ngFor="let kpi of kpis"
+                [title]="kpi.title"
+                [value]="kpi.value"
+                [icon]="kpi.icon"
+                [trend]="kpi.trend"
+                [status]="kpi.status"
+                [unit]="kpi.unit ?? ''"
+              ></app-metric-card>
             </div>
           </section>
 
-          <!-- KPIs Grid -->
-          <section class="kpis-section" aria-label="Indicadores clave de rendimiento">
-            <h2 class="section-title sr-only">KPIs del Sistema</h2>
-            <ion-grid class="kpi-grid">
-              <ion-row>
-                <ion-col size="12" size-sm="6" size-md="3" *ngFor="let kpi of kpis">
-                  <app-metric-card
-                    [title]="kpi.title"
-                    [value]="kpi.value"
-                    [icon]="kpi.icon"
-                    [trend]="kpi.trend"
-                    [status]="kpi.status"
-                    [unit]="kpi.unit ?? ''"
-                  ></app-metric-card>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
+          <!-- Gráficos de alta fidelidad (Sin gráficos de barras - Telemetría continua) -->
+          <section class="charts-section" aria-label="Gráficos de telemetría e incidencias">
+            <div class="charts-grid">
+
+              <!-- Gráfico de Telemetría: Líneas continuas temporales CPU & Memoria -->
+              <article class="chart-panel chart-panel--telemetry" role="region" aria-label="Telemetría de servidores">
+                <header class="chart-panel__header">
+                  <div>
+                    <h2 class="chart-panel__title">Carga de Cómputo en Tiempo Real</h2>
+                    <p class="chart-panel__subtitle">Consumo de CPU y Memoria RAM en nodos activos</p>
+                  </div>
+                  <div class="chart-legend" aria-hidden="true">
+                    <span class="chart-legend__item">
+                      <span class="legend-line legend-line--cpu"></span>
+                      CPU (%)
+                    </span>
+                    <span class="chart-legend__item">
+                      <span class="legend-line legend-line--mem"></span>
+                      RAM (%)
+                    </span>
+                  </div>
+                </header>
+                <div class="chart-canvas-wrapper">
+                  <canvas
+                    #telemetryChart
+                    role="img"
+                    aria-label="Gráfico de líneas continuas que muestra la evolución de CPU y memoria en servidores"
+                  ></canvas>
+                </div>
+              </article>
+
+              <!-- Gráfico Anillo de Incidencias: Distribución limpia -->
+              <article class="chart-panel chart-panel--incidents" role="region" aria-label="Distribución de incidencias">
+                <header class="chart-panel__header">
+                  <div>
+                    <h2 class="chart-panel__title">Distribución de Incidencias</h2>
+                    <p class="chart-panel__subtitle">Estado de tickets en la ventana activa</p>
+                  </div>
+                </header>
+                <div class="doughnut-container">
+                  <div class="doughnut-canvas-wrapper">
+                    <canvas
+                      #doughnutChart
+                      role="img"
+                      aria-label="Gráfico de anillo de distribución de tickets por estado"
+                    ></canvas>
+                  </div>
+                  <div class="doughnut-legend-list" aria-label="Desglose por estado de ticket">
+                    <div *ngFor="let item of ticketLegend" class="doughnut-legend-row">
+                      <div class="legend-label-col">
+                        <span class="legend-chip" [style.background-color]="item.color" aria-hidden="true"></span>
+                        <span class="legend-name">{{ item.label }}</span>
+                      </div>
+                      <span class="legend-count">{{ item.value }}</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+            </div>
           </section>
 
-          <!-- Gráficos Chart.js -->
-          <section class="charts-section" aria-label="Gráficos de rendimiento">
-            <h2 class="section-title">Análisis de Infraestructura</h2>
-            <ion-grid>
-              <ion-row>
-                <!-- Gráfico de barras: Rendimiento de servidores -->
-                <ion-col size="12" size-lg="7">
-                  <ion-card class="chart-card" role="region" aria-label="Gráfico de rendimiento de servidores">
-                    <ion-card-header>
-                      <ion-card-title class="chart-title">
-                        <ion-icon name="server-outline" aria-hidden="true"></ion-icon>
-                        Rendimiento de Servidores (CPU & RAM)
-                      </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                      <div class="chart-wrapper">
-                        <canvas
-                          #barChart
-                          role="img"
-                          aria-label="Gráfico de barras mostrando CPU y uso de memoria por servidor"
-                        ></canvas>
-                      </div>
-                    </ion-card-content>
-                  </ion-card>
-                </ion-col>
+          <!-- Estado de nodos y servidores en tiempo real -->
+          <section class="servers-section" aria-label="Nodos de infraestructura en producción">
+            <div class="section-header-row">
+              <div>
+                <h2 class="section-heading">Nodos de Infraestructura</h2>
+                <p class="section-subheading">Estado operativo y métricas por instancia de servidor</p>
+              </div>
+              <span class="server-count-badge">{{ topServers.length }} nodos monitorizados</span>
+            </div>
 
-                <!-- Gráfico Doughnut: Distribución de tickets -->
-                <ion-col size="12" size-lg="5">
-                  <ion-card class="chart-card" role="region" aria-label="Distribución de tickets por estado">
-                    <ion-card-header>
-                      <ion-card-title class="chart-title">
-                        <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
-                        Distribución de Incidencias
-                      </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                      <div class="chart-wrapper doughnut-wrapper">
-                        <canvas
-                          #doughnutChart
-                          role="img"
-                          aria-label="Gráfico doughnut mostrando distribución de tickets por estado"
-                        ></canvas>
-                      </div>
-                      <!-- Leyenda accesible -->
-                      <div class="doughnut-legend" aria-label="Leyenda del gráfico de incidencias">
-                        <div *ngFor="let item of ticketLegend" class="legend-item">
-                          <span class="legend-dot" [style.background]="item.color" aria-hidden="true"></span>
-                          <span>{{ item.label }}: <strong>{{ item.value }}</strong></span>
-                        </div>
-                      </div>
-                    </ion-card-content>
-                  </ion-card>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </section>
-
-          <!-- Estado de servidores -->
-          <section class="servers-section" aria-label="Estado de servidores en tiempo real">
-            <h2 class="section-title">Estado en Tiempo Real</h2>
             <div class="server-grid">
               <div
                 *ngFor="let server of topServers"
-                class="server-item"
-                [class]="'server-item--' + server.status.toLowerCase()"
+                class="server-card"
                 role="status"
-                [attr.aria-label]="server.serverName + ': ' + server.status + ', CPU ' + server.cpuUsage + '%'"
+                [attr.aria-label]="server.serverName + ': estado ' + server.status + ', CPU al ' + server.cpuUsage + '%, RAM al ' + server.memoryUsage + '%'"
               >
-                <div class="server-name">{{ server.serverName }}</div>
-                <div class="server-status">
-                  <span class="status-indicator" [class]="'si--' + server.status.toLowerCase()" aria-hidden="true"></span>
-                  {{ server.status }}
+                <div class="server-card__top">
+                  <span class="server-hostname">{{ server.serverName }}</span>
+                  <span class="server-status-pill" [class]="'pill--' + server.status.toLowerCase()">
+                    <span class="status-pip" aria-hidden="true"></span>
+                    {{ server.status }}
+                  </span>
                 </div>
-                <div class="server-metrics">
-                  <span>CPU: <strong>{{ server.cpuUsage }}%</strong></span>
-                  <span>RAM: <strong>{{ server.memoryUsage }}%</strong></span>
+
+                <div class="server-card__metrics">
+                  <div class="metric-meter">
+                    <div class="metric-meter__header">
+                      <span>CPU</span>
+                      <strong>{{ server.cpuUsage }}%</strong>
+                    </div>
+                    <div class="metric-meter__track">
+                      <div
+                        class="metric-meter__fill"
+                        [class.fill--warn]="server.cpuUsage > 75"
+                        [class.fill--danger]="server.cpuUsage > 90"
+                        [style.width.%]="server.cpuUsage"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="metric-meter">
+                    <div class="metric-meter__header">
+                      <span>RAM</span>
+                      <strong>{{ server.memoryUsage }}%</strong>
+                    </div>
+                    <div class="metric-meter__track">
+                      <div
+                        class="metric-meter__fill metric-meter__fill--mem"
+                        [class.fill--warn]="server.memoryUsage > 80"
+                        [class.fill--danger]="server.memoryUsage > 92"
+                        [style.width.%]="server.memoryUsage"
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -236,120 +284,409 @@ addIcons({
     </ion-content>
   `,
   styles: [`
-    .dashboard-main { padding: 16px; }
-    .loading-overlay {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 50vh; gap: 12px;
-      color: var(--color-text-secondary);
+    .app-toolbar {
+      --background: var(--surface-card);
+      --border-color: var(--color-border);
+      border-bottom: 1px solid var(--color-border);
     }
-    .toolbar-title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-    .spin { animation: spin 1s linear infinite; }
+    .toolbar-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+    .toolbar-brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-accent);
+    }
+    .header-refresh-btn {
+      --color: var(--color-text-secondary);
+    }
+    .spin { animation: spin 0.8s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* Bienvenida */
-    .dashboard-welcome {
-      display: flex; flex-wrap: wrap;
-      align-items: center; justify-content: space-between;
-      gap: 12px; margin-bottom: 20px;
-      padding: 16px 0;
+    .dashboard-main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
     }
-    .welcome-title {
-      font-size: 1.4rem; font-weight: 800;
-      color: var(--color-text-primary);
-      margin: 0 0 4px;
-      display: flex; align-items: center; gap: 8px;
+    .loading-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 45vh;
+      gap: 12px;
+      color: var(--color-text-secondary);
     }
-    .admin-badge {
-      font-size: 0.6rem; font-weight: 700;
-      background: var(--color-primary); color: white;
-      padding: 2px 8px; border-radius: 20px;
-      vertical-align: middle; letter-spacing: 0.05em;
+    .loading-text {
+      font-size: 0.875rem;
+      font-weight: 500;
     }
-    .welcome-sub {
-      font-size: 0.82rem; color: var(--color-text-secondary);
-      display: flex; align-items: center; gap: 4px; margin: 0;
-    }
-    .export-actions { display: flex; gap: 8px; }
 
-    /* KPIs */
-    .kpis-section { margin-bottom: 8px; }
-    .kpi-grid { padding: 0; }
-
-    /* Section titles */
-    .section-title {
-      font-size: 1.1rem; font-weight: 700;
-      color: var(--color-text-primary);
-      margin: 0 0 12px;
+    /* Cabecera Operativa */
+    .dashboard-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 24px;
     }
-    .section-title.sr-only {
+    .header-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 4px;
+    }
+    .bc-sep { color: var(--color-text-disabled); }
+    .bc-current { color: var(--color-text-primary); font-weight: 500; }
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    .header-subtitle {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #059669;
+      font-weight: 500;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #059669;
+    }
+    .meta-sep { color: var(--color-text-disabled); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      background: var(--surface-card);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .action-btn:hover:not(:disabled) {
+      background: var(--color-hover);
+      border-color: var(--color-text-disabled);
+    }
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .action-btn--primary {
+      background: var(--color-primary);
+      color: #ffffff;
+      border-color: var(--color-primary);
+    }
+    .action-btn--primary:hover:not(:disabled) {
+      background: #0f1d3b;
+      border-color: #0f1d3b;
+      color: #ffffff;
+    }
+
+    /* KPIs Grid */
+    .kpis-section { margin-bottom: 24px; }
+    .section-heading.sr-only {
       position: absolute; width: 1px; height: 1px;
       padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+      clip: rect(0,0,0,0); border: 0;
     }
-    .charts-section { margin: 16px 0; }
-    .chart-card { border-radius: 16px !important; }
-    .chart-title {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.95rem; font-weight: 700;
-    }
-    .chart-wrapper { position: relative; height: 280px; }
-    .doughnut-wrapper { height: 220px; }
-    .doughnut-legend {
-      display: flex; flex-wrap: wrap; gap: 12px;
-      justify-content: center; margin-top: 12px;
-    }
-    .legend-item {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.8rem; color: var(--color-text-secondary);
-    }
-    .legend-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      flex-shrink: 0;
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
     }
 
-    /* Servidores */
-    .servers-section { margin-top: 16px; }
-    .server-grid {
+    /* Paneles de Gráficos */
+    .charts-section { margin-bottom: 32px; }
+    .charts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+      grid-template-columns: 1fr;
+      gap: 18px;
     }
-    .server-item {
+    @media (min-width: 992px) {
+      .charts-grid {
+        grid-template-columns: 1.6fr 1fr;
+      }
+    }
+
+    .chart-panel {
       background: var(--surface-card);
       border: 1px solid var(--color-border);
       border-radius: 12px;
-      padding: 14px;
-      border-left: 4px solid transparent;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
     }
-    .server-item--online   { border-left-color: #10b981; }
-    .server-item--degraded { border-left-color: #f59e0b; }
-    .server-item--offline  { border-left-color: #ef4444; }
-    .server-name {
-      font-size: 0.82rem; font-weight: 700;
-      color: var(--color-text-primary); margin-bottom: 6px;
-      font-family: monospace; letter-spacing: 0.02em;
+    .chart-panel__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
     }
-    .server-status {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.75rem; font-weight: 600;
-      color: var(--color-text-secondary); margin-bottom: 8px;
+    .chart-panel__title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 2px;
+      letter-spacing: -0.01em;
     }
-    .status-indicator {
-      width: 7px; height: 7px; border-radius: 50%;
+    .chart-panel__subtitle {
+      font-size: 0.78125rem;
+      color: var(--color-text-secondary);
+      margin: 0;
     }
-    .si--online   { background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
-    .si--degraded { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
-    .si--offline  { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
-    .server-metrics {
-      display: flex; gap: 10px;
-      font-size: 0.75rem; color: var(--color-text-secondary);
+
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .server-metrics strong { color: var(--color-text-primary); }
+    .chart-legend__item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+    .legend-line {
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .legend-line--cpu { background: #0f172a; }
+    .legend-line--mem { background: #2563eb; }
+
+    .chart-canvas-wrapper {
+      position: relative;
+      height: 270px;
+      width: 100%;
+    }
+
+    /* Anillo de incidencias */
+    .doughnut-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    @media (min-width: 540px) {
+      .doughnut-container {
+        flex-direction: row;
+        gap: 20px;
+      }
+    }
+    .doughnut-canvas-wrapper {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      flex-shrink: 0;
+    }
+    .doughnut-legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      max-width: 200px;
+    }
+    .doughnut-legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .doughnut-legend-row:last-child { border-bottom: none; }
+    .legend-label-col {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-chip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .legend-name {
+      color: var(--color-text-secondary);
+    }
+    .legend-count {
+      font-weight: 600;
+      color: var(--color-text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Servidores */
+    .servers-section { margin-top: 8px; }
+    .section-header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .section-heading {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 2px;
+      letter-spacing: -0.01em;
+    }
+    .section-subheading {
+      font-size: 0.78125rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+    .server-count-badge {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      background: var(--surface-ground);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--color-border);
+    }
+
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .server-card {
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.15s ease;
+    }
+    .server-card:hover {
+      border-color: var(--color-text-disabled);
+    }
+    .server-card__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .server-hostname {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .server-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .status-pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .pill--online {
+      background: rgba(5, 150, 105, 0.08);
+      color: #059669;
+      border: 1px solid rgba(5, 150, 105, 0.2);
+    }
+    .pill--online .status-pip { background: #059669; }
+    .pill--degraded {
+      background: rgba(217, 119, 6, 0.08);
+      color: #d97706;
+      border: 1px solid rgba(217, 119, 6, 0.2);
+    }
+    .pill--degraded .status-pip { background: #d97706; }
+    .pill--offline {
+      background: rgba(220, 38, 38, 0.08);
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    .pill--offline .status-pip { background: #dc2626; }
+
+    .server-card__metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .metric-meter__header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.71875rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 3px;
+    }
+    .metric-meter__header strong {
+      color: var(--color-text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-meter__track {
+      height: 5px;
+      background: var(--surface-ground);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+    }
+    .metric-meter__fill {
+      height: 100%;
+      background: #0f172a;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .metric-meter__fill--mem { background: #2563eb; }
+    .fill--warn { background: #d97706 !important; }
+    .fill--danger { background: #dc2626 !important; }
   `]
 })
 export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('barChart') barChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('telemetryChart') telemetryChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('doughnutChart') doughnutChartRef!: ElementRef<HTMLCanvasElement>;
 
   private readonly sqlService = inject(SqlMockService);
@@ -361,7 +698,7 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
-  private barChart: Chart | null = null;
+  private telemetryChart: Chart | null = null;
   private doughnutChart: Chart | null = null;
 
   isLoading = true;
@@ -389,7 +726,7 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.barChart?.destroy();
+    this.telemetryChart?.destroy();
     this.doughnutChart?.destroy();
   }
 
@@ -420,16 +757,16 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
           this.isLoading = false;
           this.cdr.markForCheck();
 
-          // Inicializar/actualizar gráficos tras render
+          // Inicializar gráfico continuo de telemetría y anillo de incidencias
           setTimeout(() => {
-            this.initBarChart(live);
+            this.initTelemetryLineChart(live);
             this.initDoughnutChart(summary);
             this.cdr.markForCheck();
           }, 100);
         },
         error: () => {
           this.isLoading = false;
-          this.notif.error('Error al cargar los datos del dashboard.');
+          this.notif.error('Error al sincronizar datos del clúster.');
           this.cdr.markForCheck();
         },
       });
@@ -437,27 +774,27 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
 
   onRefresh(event: CustomEvent): void {
     this.loadData();
-    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 1200);
+    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 1000);
   }
 
   exportCsv(): void {
     this.isExporting = true;
-    this.notif.info('Generando CSV...');
+    this.notif.info('Generando archivo CSV...');
     setTimeout(() => {
       this.exportService.exportTicketsToCsv(this.allTickets, 'dashboard-tickets');
       this.isExporting = false;
-      this.notif.success('CSV descargado correctamente.');
+      this.notif.success('Archivo CSV descargado correctamente.');
       this.cdr.markForCheck();
     }, 300);
   }
 
   exportPdf(): void {
     this.isExporting = true;
-    this.notif.info('Generando PDF profesional...');
+    this.notif.info('Generando informe ejecutivo PDF...');
     setTimeout(() => {
       this.exportService.exportDashboardToPdf(this.allTickets, this.metrics);
       this.isExporting = false;
-      this.notif.success('PDF descargado correctamente.');
+      this.notif.success('Informe PDF descargado correctamente.');
       this.cdr.markForCheck();
     }, 300);
   }
@@ -465,64 +802,98 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
   private buildKpis(s: SummaryMetrics, totalTickets: number): void {
     this.kpis = [
       {
-        id: 'servers', title: 'Servidores Online', value: `${s.onlineServers}/${s.totalServers}`,
-        icon: 'server-outline', trend: 2, status: 'success',
+        id: 'servers',
+        title: 'Nodos en Línea',
+        value: `${s.onlineServers} / ${s.totalServers}`,
+        icon: 'server-outline',
+        trend: 2,
+        status: 'success',
       },
       {
-        id: 'cpu', title: 'CPU Promedio', value: s.avgCpuUsage.toFixed(1),
-        icon: 'stats-chart-outline', trend: -3, status: s.avgCpuUsage > 80 ? 'danger' : s.avgCpuUsage > 65 ? 'warning' : 'success',
+        id: 'cpu',
+        title: 'Carga Media CPU',
+        value: s.avgCpuUsage.toFixed(1),
+        icon: 'pulse-outline',
+        trend: -3,
+        status: s.avgCpuUsage > 80 ? 'danger' : s.avgCpuUsage > 65 ? 'warning' : 'success',
         unit: '%',
       },
       {
-        id: 'tickets', title: 'Tickets Abiertos', value: s.openTickets,
-        icon: 'alert-circle-outline', trend: 5, status: s.openTickets > 5 ? 'danger' : 'warning',
+        id: 'tickets',
+        title: 'Incidencias Abiertas',
+        value: s.openTickets,
+        icon: 'alert-circle-outline',
+        trend: 5,
+        status: s.openTickets > 5 ? 'danger' : 'warning',
       },
       {
-        id: 'uptime', title: 'Uptime Sistema', value: `${s.uptimePercent}`,
-        icon: 'checkmark-circle-outline', trend: 0, status: 'success', unit: '%',
+        id: 'uptime',
+        title: 'Disponibilidad Clúster',
+        value: `${s.uptimePercent}`,
+        icon: 'checkmark-circle-outline',
+        trend: 0,
+        status: 'success',
+        unit: '%',
       },
     ];
   }
 
   private buildTicketLegend(s: SummaryMetrics): void {
+    const openCount = this.allTickets.filter(t => t.status === 'OPEN').length;
+    const inProgressCount = this.allTickets.filter(t => t.status === 'IN_PROGRESS').length;
+    const resolvedCount = this.allTickets.filter(t => t.status === 'RESOLVED').length;
+    const closedCount = this.allTickets.filter(t => t.status === 'CLOSED').length;
+
     this.ticketLegend = [
-      { label: 'Abiertos',     value: s.openTickets - (s.totalTickets - s.openTickets - s.criticalAlerts > 0 ? 0 : 0), color: '#ef4444' },
-      { label: 'En progreso',  value: s.openTickets > 3 ? 3 : 2, color: '#f59e0b' },
-      { label: 'Resueltos',    value: Math.floor(s.totalTickets * 0.3), color: '#10b981' },
-      { label: 'Cerrados',     value: Math.floor(s.totalTickets * 0.1), color: '#6b7280' },
+      { label: 'Abiertas',     value: openCount,       color: '#dc2626' },
+      { label: 'En progreso',  value: inProgressCount, color: '#d97706' },
+      { label: 'Resueltas',    value: resolvedCount,   color: '#059669' },
+      { label: 'Cerradas',     value: closedCount,     color: '#64748b' },
     ];
   }
 
-  private initBarChart(live: LiveMetrics): void {
-    const canvas = this.barChartRef?.nativeElement;
+  /**
+   * Inicializa el gráfico continuo de telemetría (Taste Skill: sustituye barras genéricas).
+   * Línea de alta precisión con marcas discretas y cuadrícula tenue.
+   */
+  private initTelemetryLineChart(live: LiveMetrics): void {
+    const canvas = this.telemetryChartRef?.nativeElement;
     if (!canvas) return;
 
-    this.barChart?.destroy();
+    this.telemetryChart?.destroy();
 
     const labels = live.chartLabels.slice(0, 8);
     const cpuData = live.cpuData.slice(0, 8);
     const memData = live.memoryData.slice(0, 8);
 
-    this.barChart = new Chart(canvas, {
-      type: 'bar',
+    this.telemetryChart = new Chart(canvas, {
+      type: 'line',
       data: {
         labels,
         datasets: [
           {
             label: 'CPU (%)',
             data: cpuData,
-            backgroundColor: 'rgba(25, 42, 86, 0.75)',
-            borderColor: 'rgba(25, 42, 86, 1)',
-            borderWidth: 1,
-            borderRadius: 6,
+            borderColor: '#0f172a',
+            backgroundColor: 'rgba(15, 23, 42, 0.04)',
+            borderWidth: 2,
+            tension: 0.25,
+            fill: true,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#0f172a',
           },
           {
             label: 'RAM (%)',
             data: memData,
-            backgroundColor: 'rgba(6, 182, 212, 0.65)',
-            borderColor: 'rgba(6, 182, 212, 1)',
-            borderWidth: 1,
-            borderRadius: 6,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.05)',
+            borderWidth: 1.8,
+            tension: 0.25,
+            fill: true,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#2563eb',
           },
         ],
       },
@@ -530,10 +901,16 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { font: { family: 'Inter', size: 12 } } },
+          legend: { display: false },
           tooltip: {
+            backgroundColor: '#0f172a',
+            titleFont: { size: 11, weight: 'bold' },
+            bodyFont: { size: 11 },
+            padding: 10,
+            cornerRadius: 6,
+            displayColors: true,
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}%`,
+              label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`,
             },
           },
         },
@@ -541,18 +918,33 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
           y: {
             beginAtZero: true,
             max: 100,
-            ticks: { callback: (v) => `${v}%`, font: { family: 'Inter', size: 11 } },
-            grid: { color: 'rgba(200,210,240,0.3)' },
+            ticks: {
+              stepSize: 25,
+              callback: (v) => `${v}%`,
+              font: { size: 11, family: 'Inter' },
+              color: '#64748b',
+            },
+            grid: {
+              color: 'rgba(226, 232, 240, 0.7)',
+            },
+            border: { display: false },
           },
           x: {
-            ticks: { font: { family: 'monospace', size: 9 }, maxRotation: 45 },
+            ticks: {
+              font: { size: 10, family: 'monospace' },
+              color: '#64748b',
+            },
             grid: { display: false },
+            border: { display: false },
           },
         },
       },
     });
   }
 
+  /**
+   * Inicializa el anillo geométrico de incidencias (cutout 74%).
+   */
   private initDoughnutChart(s: SummaryMetrics): void {
     const canvas = this.doughnutChartRef?.nativeElement;
     if (!canvas) return;
@@ -564,36 +956,32 @@ export class DashboardPage implements OnInit, OnDestroy, AfterViewInit {
     const resolvedCount = this.allTickets.filter(t => t.status === 'RESOLVED').length;
     const closedCount = this.allTickets.filter(t => t.status === 'CLOSED').length;
 
-    this.ticketLegend = [
-      { label: 'Abiertos',     value: openCount,      color: '#ef4444' },
-      { label: 'En progreso',  value: inProgressCount, color: '#f59e0b' },
-      { label: 'Resueltos',    value: resolvedCount,   color: '#10b981' },
-      { label: 'Cerrados',     value: closedCount,     color: '#6b7280' },
-    ];
-
     this.doughnutChart = new Chart(canvas, {
       type: 'doughnut',
       data: {
-        labels: ['Abiertos', 'En progreso', 'Resueltos', 'Cerrados'],
+        labels: ['Abiertas', 'En progreso', 'Resueltas', 'Cerradas'],
         datasets: [
           {
             data: [openCount, inProgressCount, resolvedCount, closedCount],
-            backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#6b7280'],
-            borderColor: ['#dc2626', '#d97706', '#059669', '#4b5563'],
+            backgroundColor: ['#dc2626', '#d97706', '#059669', '#64748b'],
+            borderColor: '#ffffff',
             borderWidth: 2,
-            hoverOffset: 8,
+            hoverOffset: 6,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '65%',
+        cutout: '74%',
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor: '#0f172a',
+            padding: 8,
+            cornerRadius: 6,
             callbacks: {
-              label: (ctx) => `${ctx.label}: ${ctx.raw} tickets`,
+              label: (ctx) => ` ${ctx.label}: ${ctx.raw} tickets`,
             },
           },
         },
