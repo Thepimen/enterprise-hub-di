@@ -19,14 +19,7 @@ customElements.define('compodoc-menu', class extends HTMLElement {
                 </li>
 
                 <li class="divider"></li>
-                ${ isNormalMode ? `<div id="book-search-input" role="search">
-    <input type="text" placeholder="Type to search">
-    <button type="button"
-        class="search-input-clear"
-        aria-label="Clear search"
-        data-search-input-clear>&times;</button>
-</div>
-` : '' }
+                ${ isNormalMode ? `<div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>` : '' }
                 <li class="chapter">
                     <a data-type="chapter-link" href="index.html"><span class="icon ion-ios-home"></span>Getting started</a>
                     <ul class="links">

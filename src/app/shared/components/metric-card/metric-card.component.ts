@@ -1,8 +1,11 @@
 /**
  * @file metric-card.component.ts
- * @description Widget KPI agnóstico y reutilizable para el Dashboard.
+ * @description Widget KPI tipográfico agnóstico y reutilizable para el Dashboard.
+ * Sigue las directrices anti-slop de Taste Skill:
+ * - Sin iconos en cajas redondeadas de colores ("tells.md")
+ * - Sin degradados superiores ni sombras pesadas ("app-screens.md §5")
+ * - Enfoque tipográfico con números tabulares y deltas honestas
  * Implementa ChangeDetectionStrategy.OnPush y accesibilidad semántica.
- * @input title, value, icon, trend, status
  */
 import {
   Component, Input, ChangeDetectionStrategy, OnInit, OnChanges, OnDestroy, SimpleChanges
@@ -18,6 +21,13 @@ import {
   cloudUploadOutline, shieldCheckmarkOutline, peopleOutline
 } from 'ionicons/icons';
 
+addIcons({
+  trendingUpOutline, trendingDownOutline, removeOutline,
+  serverOutline, alertCircleOutline, checkmarkCircleOutline,
+  statsChartOutline, timerOutline, hardwareChipOutline,
+  cloudUploadOutline, shieldCheckmarkOutline, peopleOutline
+});
+
 @Component({
   selector: 'app-metric-card',
   standalone: true,
@@ -30,131 +40,110 @@ import {
       role="region"
       [attr.aria-label]="ariaDescription"
     >
-      <div class="metric-card__icon-wrapper" [class]="'icon-wrapper--' + status" aria-hidden="true">
-        <ion-icon [name]="icon" class="metric-card__icon"></ion-icon>
+      <div class="metric-card__header">
+        <span class="metric-card__title">{{ title }}</span>
+        <span class="metric-card__dot" [class]="'dot--' + status" aria-hidden="true"></span>
       </div>
 
-      <div class="metric-card__content">
-        <p class="metric-card__title">{{ title }}</p>
+      <div class="metric-card__body">
         <p class="metric-card__value" [attr.aria-label]="title + ': ' + value + (unit ? ' ' + unit : '')">
           {{ value }}
           <span *ngIf="unit" class="metric-card__unit">{{ unit }}</span>
         </p>
       </div>
 
-      <div class="metric-card__trend" [attr.aria-label]="trendLabel">
-        <ion-icon
-          [name]="trendIcon"
-          class="trend-icon"
-          [class]="'trend-icon--' + trendDirection"
-          aria-hidden="true"
-        ></ion-icon>
-        <span class="trend-value" [class]="'trend-value--' + trendDirection">
-          {{ trend > 0 ? '+' : '' }}{{ trend }}%
+      <div class="metric-card__footer">
+        <span class="trend-badge" [class]="'trend--' + trendDirection" [attr.aria-label]="trendLabel">
+          <ion-icon [name]="trendIcon" class="trend-icon" aria-hidden="true"></ion-icon>
+          <span class="trend-number">{{ trend > 0 ? '+' : '' }}{{ trend }}%</span>
         </span>
+        <span class="trend-context">vs periodo ant.</span>
       </div>
-
-      <!-- Indicador de estado accesible -->
-      <span class="status-dot" [class]="'status-dot--' + status" [attr.aria-hidden]="true"></span>
     </article>
   `,
   styles: [`
     .metric-card {
       background: var(--surface-card);
-      border-radius: 16px;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      grid-template-rows: auto auto;
-      gap: 8px 14px;
-      align-items: center;
       border: 1px solid var(--color-border);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .metric-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    }
-    .metric-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-    }
-    .metric-card--success::before { background: linear-gradient(90deg, #10b981, #34d399); }
-    .metric-card--warning::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .metric-card--danger::before  { background: linear-gradient(90deg, #ef4444, #f87171); }
-
-    .metric-card__icon-wrapper {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      grid-row: 1 / 3;
-    }
-    .icon-wrapper--success { background: rgba(16, 185, 129, 0.12); }
-    .icon-wrapper--warning { background: rgba(245, 158, 11, 0.12); }
-    .icon-wrapper--danger  { background: rgba(239, 68, 68, 0.12); }
-
-    .metric-card__icon {
-      font-size: 1.6rem;
-    }
-    .icon-wrapper--success .metric-card__icon { color: #10b981; }
-    .icon-wrapper--warning .metric-card__icon { color: #f59e0b; }
-    .icon-wrapper--danger  .metric-card__icon { color: #ef4444; }
-
-    .metric-card__content { grid-column: 2; }
-    .metric-card__title {
-      font-size: 0.78rem;
-      font-weight: 500;
-      color: var(--color-text-secondary);
-      margin: 0 0 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .metric-card__value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--color-text-primary);
-      margin: 0;
-      line-height: 1.1;
-    }
-    .metric-card__unit {
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--color-text-secondary);
-    }
-    .metric-card__trend {
-      grid-column: 3;
-      grid-row: 1 / 3;
+      border-radius: 10px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      min-height: 116px;
+      position: relative;
+      transition: border-color 0.15s ease;
+    }
+    .metric-card:hover {
+      border-color: var(--color-text-disabled);
+    }
+    .metric-card__header {
+      display: flex;
       align-items: center;
-      gap: 2px;
+      justify-content: space-between;
+      gap: 8px;
     }
-    .trend-icon { font-size: 1.3rem; }
-    .trend-icon--up    { color: #10b981; }
-    .trend-icon--down  { color: #ef4444; }
-    .trend-icon--stable { color: #6b7280; }
-    .trend-value { font-size: 0.78rem; font-weight: 600; }
-    .trend-value--up    { color: #10b981; }
-    .trend-value--down  { color: #ef4444; }
-    .trend-value--stable { color: #6b7280; }
-
-    .status-dot {
-      position: absolute;
-      top: 12px; right: 12px;
-      width: 8px; height: 8px;
+    .metric-card__title {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .metric-card__dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
-    .status-dot--success { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
-    .status-dot--warning { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
-    .status-dot--danger  { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.2);  }
+    .dot--success { background: #059669; }
+    .dot--warning { background: #d97706; }
+    .dot--danger  { background: #dc2626; }
+
+    .metric-card__body {
+      margin: 8px 0 6px;
+    }
+    .metric-card__value {
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .metric-card__unit {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      margin-left: 2px;
+    }
+
+    .metric-card__footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+    .trend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .trend-icon {
+      font-size: 0.85rem;
+    }
+    .trend--up    { color: #059669; }
+    .trend--down  { color: #dc2626; }
+    .trend--stable { color: var(--color-text-secondary); }
+    .trend-number { font-weight: 600; }
+    .trend-context {
+      color: var(--color-text-disabled);
+      font-size: 0.72rem;
+    }
   `],
 })
 export class MetricCardComponent implements OnInit, OnChanges, OnDestroy {
@@ -203,10 +192,3 @@ export class MetricCardComponent implements OnInit, OnChanges, OnDestroy {
     this.ariaDescription = `${this.title}: ${this.value}${this.unit ? ' ' + this.unit : ''}. ${this.trendLabel}. Estado: ${this.status === 'success' ? 'correcto' : this.status === 'warning' ? 'advertencia' : 'crítico'}.`;
   }
 }
-
-addIcons({
-  trendingUpOutline, trendingDownOutline, removeOutline,
-  serverOutline, alertCircleOutline, checkmarkCircleOutline,
-  statsChartOutline, timerOutline, hardwareChipOutline,
-  cloudUploadOutline, shieldCheckmarkOutline, peopleOutline
-});
