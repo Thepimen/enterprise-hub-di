@@ -84,14 +84,7 @@
         </div>
 
         <div class="xs-menu menu" id="mobile-menu">
-                <div id="book-search-input" role="search">
-    <input type="text" placeholder="Type to search">
-    <button type="button"
-        class="search-input-clear"
-        aria-label="Clear search"
-        data-search-input-clear>&times;</button>
-</div>
-            <compodoc-menu></compodoc-menu>
+                <div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>            <compodoc-menu></compodoc-menu>
         </div>
 
         <div class="container-fluid main">
@@ -117,16 +110,40 @@
 <h2>📋 1. Metadatos Académicos</h2>
 <table class="table table-bordered compodoc-table">
 <thead>
-<tr><th style="text-align: left">Campo</th><th style="text-align: left">Información Oficial</th></tr>
+<tr>
+<th align="left">Campo</th>
+<th align="left">Información Oficial</th>
+</tr>
 </thead>
 <tbody>
-<tr><td style="text-align: left"><strong>Proyecto</strong></td><td style="text-align: left">EnterpriseHub PWA — Sistema de Gestión Multiplataforma B2B y Monitorización</td></tr>
-<tr><td style="text-align: left"><strong>Autor</strong></td><td style="text-align: left"><strong>Luis Lázaro Pimentel</strong></td></tr>
-<tr><td style="text-align: left"><strong>Centro Educativo</strong></td><td style="text-align: left"><strong>Instituto Nebrija de Formación Profesional</strong></td></tr>
-<tr><td style="text-align: left"><strong>Ciclo Formativo</strong></td><td style="text-align: left">2º Grado Superior en Desarrollo de Aplicaciones Multiplataforma (DAM)</td></tr>
-<tr><td style="text-align: left"><strong>Módulo Profesional</strong></td><td style="text-align: left">Desarrollo de Interfaces</td></tr>
-<tr><td style="text-align: left"><strong>Código del Módulo</strong></td><td style="text-align: left"><strong>0488</strong></td></tr>
-<tr><td style="text-align: left"><strong>Convocatoria / Curso</strong></td><td style="text-align: left">2025 – 2026</td></tr>
+<tr>
+<td align="left"><strong>Proyecto</strong></td>
+<td align="left">EnterpriseHub PWA — Sistema de Gestión Multiplataforma B2B y Monitorización</td>
+</tr>
+<tr>
+<td align="left"><strong>Autor</strong></td>
+<td align="left"><strong>Luis Lázaro Pimentel</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Centro Educativo</strong></td>
+<td align="left"><strong>Instituto Nebrija de Formación Profesional</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Ciclo Formativo</strong></td>
+<td align="left">2º Grado Superior en Desarrollo de Aplicaciones Multiplataforma (DAM)</td>
+</tr>
+<tr>
+<td align="left"><strong>Módulo Profesional</strong></td>
+<td align="left">Desarrollo de Interfaces</td>
+</tr>
+<tr>
+<td align="left"><strong>Código del Módulo</strong></td>
+<td align="left"><strong>0488</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Convocatoria / Curso</strong></td>
+<td align="left">2025 – 2026</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -134,11 +151,26 @@
 <p>La aplicación implementa un sistema de control de acceso basado en roles (<strong>RBAC</strong> - <em>Role-Based Access Control</em>) con persistencia en sesión y protección perimetral de rutas. Para facilitar la evaluación, la pantalla de inicio de sesión incorpora botones de <strong>acceso rápido</strong> con las siguientes cuentas preconfiguradas:</p>
 <table class="table table-bordered compodoc-table">
 <thead>
-<tr><th style="text-align: left">Rol</th><th style="text-align: left">Correo Electrónico</th><th style="text-align: left">Contraseña</th><th style="text-align: left">Nivel de Acceso y Permisos</th></tr>
+<tr>
+<th align="left">Rol</th>
+<th align="left">Correo Electrónico</th>
+<th align="left">Contraseña</th>
+<th align="left">Nivel de Acceso y Permisos</th>
+</tr>
 </thead>
 <tbody>
-<tr><td style="text-align: left"><strong>👑 Administrador (<code>ADMIN</code>)</strong></td><td style="text-align: left"><code>admin@enterprise.io</code></td><td style="text-align: left"><code>Admin123!</code></td><td style="text-align: left"><strong>Acceso Total:</strong> Supervisión de KPIs ejecutivos, gráficos analíticos de infraestructura, tabla avanzada de tickets con filtrado/búsqueda, creación de incidencias, exportación de informes en PDF/CSV y centro de ayuda.</td></tr>
-<tr><td style="text-align: left"><strong>👤 Usuario Estándar (<code>USER</code>)</strong></td><td style="text-align: left"><code>user@enterprise.io</code></td><td style="text-align: left"><code>User123!</code></td><td style="text-align: left"><strong>Acceso Operativo:</strong> Visualización y gestión del módulo de Tickets, creación de incidencias y Centro de Ayuda. <strong>Acceso Restringido:</strong> El acceso a <code>/dashboard</code> está bloqueado preventivamente a nivel de navegación y enrutador mediante <code>roleGuard</code>.</td></tr>
+<tr>
+<td align="left"><strong>👑 Administrador (<code>ADMIN</code>)</strong></td>
+<td align="left"><code>admin@enterprise.io</code></td>
+<td align="left"><code>Admin123!</code></td>
+<td align="left"><strong>Acceso Total:</strong> Supervisión de KPIs ejecutivos, gráficos analíticos de infraestructura, tabla avanzada de tickets con filtrado/búsqueda, creación de incidencias, exportación de informes en PDF/CSV y centro de ayuda.</td>
+</tr>
+<tr>
+<td align="left"><strong>👤 Usuario Estándar (<code>USER</code>)</strong></td>
+<td align="left"><code>user@enterprise.io</code></td>
+<td align="left"><code>User123!</code></td>
+<td align="left"><strong>Acceso Operativo:</strong> Visualización y gestión del módulo de Tickets, creación de incidencias y Centro de Ayuda. <strong>Acceso Restringido:</strong> El acceso a <code>/dashboard</code> está bloqueado preventivamente a nivel de navegación y enrutador mediante <code>roleGuard</code>.</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -356,24 +388,6 @@ npx vercel --prod</code></pre></div><hr>
 
        <script>
                $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
-               var updateDarkModeSwitchOffset = function () {
-                    var content = document.querySelector('.content');
-                    var scrollbarWidth = 0;
-
-                    if (content) {
-                         scrollbarWidth = Math.max(0, content.offsetWidth - content.clientWidth);
-                    }
-
-                    document.documentElement.style.setProperty(
-                         '--content-scrollbar-width',
-                         scrollbarWidth + 'px'
-                    );
-               };
-
-               updateDarkModeSwitchOffset();
-               requestAnimationFrame(updateDarkModeSwitchOffset);
-               window.addEventListener('resize', updateDarkModeSwitchOffset);
-
                checkToggle(darkModeState);
                if ($darkModeToggleSwitchers.length > 0) {
                     for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
@@ -389,6 +403,7 @@ npx vercel --prod</code></pre></div><hr>
        <script src="./js/libs/lit-html.js"></script>
 
        <script src="./js/menu-wc.js" defer></script>
+       <script nomodule src="./js/menu-wc_es5.js" defer></script>
 
        <script src="./js/libs/bootstrap-native.js"></script>
 

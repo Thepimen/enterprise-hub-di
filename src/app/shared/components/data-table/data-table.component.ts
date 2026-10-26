@@ -1,6 +1,10 @@
 /**
  * @file data-table.component.ts
  * @description Componente agnóstico y reutilizable de tabla de datos.
+ * Refactorizado según las directrices de Taste Skill (app-screens.md §7):
+ * - Eliminación de bandas sólidas de cabecera en favor de reglas y alineación precisa
+ * - Sin bandas zebra artificiales, números alineados y tipografía sobria
+ * - Insignias semánticas discretas con bordes tenues
  * Implementa ChangeDetectionStrategy.OnPush, filtrado reactivo,
  * paginación, accesibilidad WCAG 2.1 AA y navegación por teclado completa.
  */
@@ -47,7 +51,7 @@ export interface RowAction {
           [id]="searchId"
           [(ngModel)]="searchText"
           (ionInput)="onSearchInput($event)"
-          placeholder="Buscar en tabla..."
+          placeholder="Filtrar por identificador, título o categoría..."
           [debounce]="300"
           aria-label="Buscar en la tabla de datos"
           class="table-searchbar"
@@ -56,8 +60,8 @@ export interface RowAction {
         ></ion-searchbar>
         <div class="table-meta" aria-live="polite" aria-atomic="true">
           <span class="meta-count">
-            {{ filteredData.length }} resultado{{ filteredData.length !== 1 ? 's' : '' }}
-            <span *ngIf="searchText"> para "{{ searchText }}"</span>
+            {{ filteredData.length }} registro{{ filteredData.length !== 1 ? 's' : '' }}
+            <span *ngIf="searchText"> coincidente{{ filteredData.length !== 1 ? 's' : '' }}</span>
           </span>
         </div>
       </div>
@@ -65,16 +69,16 @@ export interface RowAction {
       <!-- Spinner durante carga -->
       <div *ngIf="loading" class="table-loading" role="status" aria-live="polite">
         <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-        <span>Cargando datos...</span>
+        <span>Consultando registros...</span>
       </div>
 
       <!-- Sin datos -->
       <div *ngIf="!loading && filteredData.length === 0" class="table-empty" role="status">
         <ion-icon name="funnel-outline" aria-hidden="true"></ion-icon>
-        <p>No se encontraron resultados{{ searchText ? ' para "' + searchText + '"' : '' }}.</p>
+        <p>No se encontraron registros{{ searchText ? ' para "' + searchText + '"' : '' }}.</p>
       </div>
 
-      <!-- Tabla de datos -->
+      <!-- Tabla de datos (Taste Skill: encabezado con regla sutil, tipografía en frase) -->
       <div *ngIf="!loading && filteredData.length > 0" class="table-container">
         <table
           class="enterprise-table"
@@ -120,12 +124,13 @@ export interface RowAction {
               >
                 <ng-container [ngSwitch]="getCellType(row, col.key)">
                   <span *ngSwitchCase="'status'" [class]="'status-badge status-' + getBadgeClass(row[col.key])">
+                    <span class="badge-dot" aria-hidden="true"></span>
                     {{ row[col.key] }}
                   </span>
                   <span *ngSwitchCase="'priority'" [class]="'priority-badge priority-' + getBadgeClass(row[col.key])">
                     {{ row[col.key] }}
                   </span>
-                  <span *ngSwitchDefault>{{ formatCellValue(row[col.key]) }}</span>
+                  <span *ngSwitchDefault [class.mono-cell]="col.key === 'id'">{{ formatCellValue(row[col.key]) }}</span>
                 </ng-container>
               </td>
               <td *ngIf="actions.length > 0" role="gridcell" class="table-cell actions-cell">
@@ -147,7 +152,7 @@ export interface RowAction {
         </table>
       </div>
 
-      <!-- Paginación accesible -->
+      <!-- Paginación accesible (Taste Skill: controles planos con borde 1px) -->
       <nav
         *ngIf="totalPages > 1"
         class="pagination-nav"
@@ -194,36 +199,42 @@ export interface RowAction {
   styles: [`
     .data-table-wrapper {
       background: var(--surface-card);
-      border-radius: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
       overflow: hidden;
     }
     .table-controls {
-      padding: 12px 16px 8px;
+      padding: 12px 16px 10px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--surface-card);
     }
     .table-searchbar {
       --border-radius: 8px;
       --background: var(--surface-ground);
+      --box-shadow: none;
+      padding: 0;
     }
     .meta-count {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--color-text-secondary);
-      padding: 0 4px;
+      padding: 0 2px;
     }
     .table-loading, .table-empty {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 48px 16px;
-      gap: 12px;
+      padding: 40px 16px;
+      gap: 10px;
       color: var(--color-text-secondary);
+      font-size: 0.8125rem;
     }
     .table-empty ion-icon {
-      font-size: 3rem;
-      opacity: 0.4;
+      font-size: 2.2rem;
+      color: var(--color-text-disabled);
     }
     .table-container {
       overflow-x: auto;
@@ -232,7 +243,7 @@ export interface RowAction {
     .enterprise-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
     }
     .sr-only {
       position: absolute;
@@ -245,103 +256,208 @@ export interface RowAction {
       white-space: nowrap;
       border: 0;
     }
+
+    /* Cabecera sutil sin banda de color estridente (Taste Skill) */
     .table-header-cell {
-      background: var(--color-primary);
-      color: white;
-      padding: 12px 16px;
+      background: var(--surface-card);
+      color: var(--color-text-secondary);
+      padding: 10px 16px;
       text-align: left;
       font-weight: 600;
-      font-size: 0.8rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: -0.01em;
+      text-transform: none;
       white-space: nowrap;
+      border-bottom: 1px solid var(--color-border);
     }
     .table-row {
       border-bottom: 1px solid var(--color-border);
-      transition: background 0.15s ease;
+      transition: background-color 0.1s ease;
       cursor: pointer;
     }
     .table-row:hover, .table-row:focus {
       background: var(--color-hover);
+      outline: none;
+    }
+    .table-row:focus-visible {
       outline: 2px solid var(--color-primary);
       outline-offset: -2px;
     }
-    .table-row:focus-visible {
-      outline: 3px solid var(--ion-color-primary);
-      outline-offset: -2px;
-    }
     .table-cell {
-      padding: 12px 16px;
+      padding: 11px 16px;
       vertical-align: middle;
       color: var(--color-text-primary);
     }
-    .status-badge, .priority-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
+    .mono-cell {
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      color: var(--color-text-secondary);
     }
-    .status-open { background: rgba(239,68,68,0.15); color: #dc2626; }
-    .status-in_progress { background: rgba(245,158,11,0.15); color: #d97706; }
-    .status-resolved { background: rgba(16,185,129,0.15); color: #059669; }
-    .status-closed { background: rgba(107,114,128,0.15); color: #6b7280; }
-    .priority-critical { background: rgba(220,38,38,0.2); color: #b91c1c; }
-    .priority-high { background: rgba(239,68,68,0.15); color: #dc2626; }
-    .priority-medium { background: rgba(245,158,11,0.15); color: #d97706; }
-    .priority-low { background: rgba(59,130,246,0.15); color: #2563eb; }
-    .actions-header { text-align: center; width: 120px; }
+
+    /* Badges semánticos discretos con borde de 1px */
+    .status-badge, .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .status-open {
+      background: rgba(220, 38, 38, 0.06);
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    .status-open .badge-dot { background: #dc2626; }
+
+    .status-in_progress {
+      background: rgba(217, 119, 6, 0.06);
+      color: #d97706;
+      border: 1px solid rgba(217, 119, 6, 0.2);
+    }
+    .status-in_progress .badge-dot { background: #d97706; }
+
+    .status-resolved {
+      background: rgba(5, 150, 105, 0.06);
+      color: #059669;
+      border: 1px solid rgba(5, 150, 105, 0.2);
+    }
+    .status-resolved .badge-dot { background: #059669; }
+
+    .status-closed {
+      background: rgba(100, 116, 139, 0.06);
+      color: #64748b;
+      border: 1px solid rgba(100, 116, 139, 0.2);
+    }
+    .status-closed .badge-dot { background: #64748b; }
+
+    .priority-critical {
+      background: rgba(220, 38, 38, 0.08);
+      color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      font-weight: 600;
+    }
+    .priority-high {
+      background: rgba(239, 68, 68, 0.06);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .priority-medium {
+      background: rgba(245, 158, 11, 0.06);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .priority-low {
+      background: rgba(37, 99, 235, 0.06);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .actions-header { text-align: center; width: 110px; }
     .actions-cell { text-align: center; }
-    .action-buttons { display: flex; gap: 6px; justify-content: center; }
+    .action-buttons { display: flex; gap: 5px; justify-content: center; }
     .action-btn {
-      background: none;
+      background: transparent;
       border: 1px solid var(--color-border);
       border-radius: 6px;
-      padding: 5px 8px;
+      padding: 4px 7px;
       cursor: pointer;
       color: var(--color-text-secondary);
-      font-size: 1rem;
-      transition: all 0.15s;
+      font-size: 0.9375rem;
+      transition: all 0.12s;
       display: flex;
       align-items: center;
     }
-    .action-btn:hover { background: var(--color-hover); color: var(--color-primary); border-color: var(--color-primary); }
-    .action-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .action-btn:hover {
+      background: var(--color-hover);
+      color: var(--color-text-primary);
+      border-color: var(--color-text-disabled);
+    }
+    .action-btn:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+
+    /* Paginación limpia y plana */
     .pagination-nav {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 16px;
+      gap: 5px;
+      padding: 12px 16px;
       flex-wrap: wrap;
+      border-top: 1px solid var(--color-border);
+      background: var(--surface-card);
     }
     .page-btn {
-      min-width: 36px;
-      height: 36px;
+      min-width: 32px;
+      height: 32px;
       border: 1px solid var(--color-border);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--surface-card);
       color: var(--color-text-primary);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.875rem;
-      transition: all 0.15s;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: all 0.12s;
     }
-    .page-btn:hover:not(:disabled) { background: var(--color-primary); color: white; border-color: var(--color-primary); }
-    .page-btn.active { background: var(--color-primary); color: white; border-color: var(--color-primary); font-weight: 700; }
-    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .page-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-    .page-info { font-size: 0.8rem; color: var(--color-text-secondary); margin-left: 8px; }
+    .page-btn:hover:not(:disabled) {
+      background: var(--color-hover);
+      border-color: var(--color-text-disabled);
+    }
+    .page-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+      font-weight: 600;
+    }
+    .page-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .page-btn:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+    .page-info {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin-left: 8px;
+    }
+
     /* Responsive: tabla card-style en mobile */
     @media (max-width: 640px) {
       .enterprise-table thead { display: none; }
-      .table-row { display: block; padding: 12px; margin: 8px 16px; border: 1px solid var(--color-border); border-radius: 10px; }
-      .table-cell { display: flex; justify-content: space-between; padding: 6px 0; border: none; }
-      .table-cell::before { content: attr(data-label); font-weight: 600; color: var(--color-text-secondary); font-size: 0.78rem; }
+      .table-row {
+        display: block;
+        padding: 10px 14px;
+        margin: 8px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+      }
+      .table-cell {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border: none;
+      }
+      .table-cell::before {
+        content: attr(data-label);
+        font-weight: 500;
+        color: var(--color-text-secondary);
+        font-size: 0.75rem;
+      }
       .actions-cell { justify-content: flex-end; }
     }
   `],

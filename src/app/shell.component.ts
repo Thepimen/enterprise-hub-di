@@ -1,7 +1,11 @@
 /**
  * @file shell.component.ts
  * @description Componente shell que envuelve el layout de ion-split-pane + ion-menu
- * para las rutas protegidas. Evita recursión con AppComponent.
+ * para las rutas protegidas.
+ * Refactorizado según las directrices de Taste Skill (app-screens.md §3):
+ * - Barra lateral sobria y neutra con regla de 1px
+ * - Sin degradados estridentes en avatares ni barra de título superior
+ * - Marca clara, estado activo con píldora neutra y tipografía funcional
  */
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -9,7 +13,7 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import {
   IonSplitPane, IonMenu, IonContent, IonList, IonListHeader,
   IonMenuToggle, IonItem, IonIcon, IonLabel, IonRouterOutlet,
-  IonHeader, IonToolbar, IonButton, IonFooter
+  IonHeader, IonToolbar, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -36,40 +40,44 @@ interface NavItem {
     CommonModule, RouterLink, RouterLinkActive,
     IonSplitPane, IonMenu, IonContent, IonList, IonListHeader,
     IonMenuToggle, IonItem, IonIcon, IonLabel, IonRouterOutlet,
-    IonHeader, IonToolbar, IonButton, IonFooter,
+    IonHeader, IonToolbar, IonFooter,
   ],
   template: `
     <ion-split-pane contentId="shell-outlet" when="lg">
-      <!-- Menú lateral -->
-      <ion-menu contentId="shell-outlet" type="overlay" menuId="main-menu">
+      <!-- Menú lateral sobrio -->
+      <ion-menu contentId="shell-outlet" type="overlay" menuId="main-menu" class="enterprise-menu">
         <ion-header>
-          <ion-toolbar color="primary">
+          <ion-toolbar class="menu-brand-toolbar">
             <div class="menu-brand" role="banner">
-              <ion-icon name="server-outline" class="brand-icon" aria-hidden="true"></ion-icon>
+              <div class="brand-monogram" aria-hidden="true">
+                <ion-icon name="server-outline"></ion-icon>
+              </div>
               <div class="brand-text">
                 <span class="brand-name">EnterpriseHub</span>
-                <span class="brand-tagline">B2B Management</span>
+                <span class="brand-tagline">Consola B2B</span>
               </div>
             </div>
           </ion-toolbar>
         </ion-header>
 
         <ion-content class="menu-content">
-          <div class="user-profile" *ngIf="currentUser" aria-label="Perfil del usuario actual">
+          <!-- Perfil de operador -->
+          <div class="user-profile" *ngIf="currentUser" aria-label="Operador en sesión">
             <div class="user-avatar" aria-hidden="true">{{ getInitials(currentUser.name) }}</div>
             <div class="user-info">
               <p class="user-name">{{ currentUser.name }}</p>
               <p class="user-email">{{ currentUser.email }}</p>
-              <span class="user-role" [class]="'role-' + currentUser.role.toLowerCase()">
-                {{ currentUser.role }}
+              <span class="user-role-badge" [class]="'badge-' + currentUser.role.toLowerCase()">
+                {{ currentUser.role === 'ADMIN' ? 'Administrador' : 'Operador' }}
               </span>
             </div>
           </div>
 
+          <!-- Navegación principal -->
           <nav role="navigation" aria-label="Navegación principal">
             <ion-list lines="none" class="nav-list">
               <ion-list-header class="nav-section-header">
-                <ion-label>MENÚ PRINCIPAL</ion-label>
+                <ion-label>Módulos de Sistema</ion-label>
               </ion-list-header>
               <ng-container *ngFor="let item of visibleNavItems">
                 <ion-menu-toggle auto-hide="false">
@@ -83,7 +91,7 @@ interface NavItem {
                     [attr.aria-current]="isActive(item.url) ? 'page' : null"
                   >
                     <ion-icon [name]="item.icon" slot="start" aria-hidden="true"></ion-icon>
-                    <ion-label>{{ item.title }}</ion-label>
+                    <ion-label class="nav-label">{{ item.title }}</ion-label>
                   </ion-item>
                 </ion-menu-toggle>
               </ng-container>
@@ -92,11 +100,11 @@ interface NavItem {
         </ion-content>
 
         <ion-footer class="menu-footer">
-          <ion-toolbar>
-            <ion-button expand="block" fill="outline" color="danger" (click)="logout()" class="logout-btn" aria-label="Cerrar sesión">
-              <ion-icon name="log-out-outline" slot="start" aria-hidden="true"></ion-icon>
-              Cerrar Sesión
-            </ion-button>
+          <ion-toolbar class="footer-toolbar">
+            <button class="logout-action-btn" (click)="logout()" aria-label="Cerrar sesión segura">
+              <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+              <span>Finalizar Sesión</span>
+            </button>
           </ion-toolbar>
         </ion-footer>
       </ion-menu>
@@ -105,29 +113,178 @@ interface NavItem {
     </ion-split-pane>
   `,
   styles: [`
-    ion-menu { --background: var(--surface-card); --width: 280px; }
-    ion-toolbar[color="primary"] { --background: var(--color-primary); }
-    .menu-brand { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
-    .brand-icon { font-size: 1.8rem; color: white; background: rgba(255,255,255,0.15); padding: 8px; border-radius: 10px; }
-    .brand-name  { display: block; font-size: 1.1rem; font-weight: 800; color: white; }
-    .brand-tagline { display: block; font-size: 0.68rem; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
-    .user-profile { display: flex; align-items: center; gap: 12px; padding: 20px 16px 16px; border-bottom: 1px solid var(--color-border); }
-    .user-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); color: white; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .user-name  { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .user-email { font-size: 0.72rem; color: var(--color-text-secondary); margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .user-role  { font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
-    .role-admin { background: var(--color-primary); color: white; }
-    .role-user  { background: #0891b2; color: white; }
-    .nav-list { padding: 8px 0; }
-    .nav-section-header { font-size: 0.68rem !important; letter-spacing: 0.08em !important; color: var(--color-text-secondary) !important; padding: 12px 16px 4px !important; }
-    .nav-item { --border-radius: 10px; --padding-start: 12px; margin: 2px 8px; border-radius: 10px; }
-    .nav-item ion-icon { font-size: 1.1rem; color: var(--color-text-secondary); }
-    .nav-item ion-label { font-size: 0.9rem; font-weight: 500; color: var(--color-text-primary); }
-    .nav-item--active { --background: rgba(25,42,86,0.08); }
-    .nav-item--active ion-icon { color: var(--color-primary) !important; }
-    .nav-item--active ion-label { color: var(--color-primary) !important; font-weight: 700 !important; }
-    .menu-footer ion-toolbar { --background: var(--surface-card); padding: 8px; }
-    .logout-btn { --border-radius: 10px; font-weight: 600; }
+    ion-menu {
+      --background: var(--surface-card);
+      --width: 260px;
+      border-right: 1px solid var(--color-border);
+    }
+    .menu-brand-toolbar {
+      --background: var(--surface-card);
+      border-bottom: 1px solid var(--color-border);
+      padding: 6px 4px;
+    }
+    .menu-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+    }
+    .brand-monogram {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--surface-ground);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .brand-name {
+      display: block;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .brand-tagline {
+      display: block;
+      font-size: 0.6875rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 14px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--surface-ground);
+      margin: 8px 10px 12px;
+      border-radius: 8px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .user-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-email {
+      font-size: 0.6875rem;
+      color: var(--color-text-secondary);
+      margin: 1px 0 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-role-badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+    .badge-admin {
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+    }
+    .badge-user {
+      background: rgba(37, 99, 235, 0.08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .nav-list { padding: 4px 0; background: transparent; }
+    .nav-section-header {
+      font-size: 0.6875rem !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      color: var(--color-text-disabled) !important;
+      padding: 8px 16px 6px !important;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      --background: transparent;
+      --border-radius: 6px;
+      --padding-start: 10px;
+      --min-height: 36px;
+      margin: 2px 8px;
+      border-radius: 6px;
+      color: var(--color-text-secondary);
+      transition: all 0.12s ease;
+    }
+    .nav-item ion-icon {
+      font-size: 1rem;
+      color: var(--color-text-secondary);
+      margin-right: 10px;
+    }
+    .nav-label {
+      font-size: 0.8125rem !important;
+      font-weight: 500 !important;
+      color: var(--color-text-secondary) !important;
+      letter-spacing: -0.01em;
+    }
+    /* Estado activo neutro sobrio (Taste Skill: neutral pill) */
+    .nav-item--active {
+      --background: var(--color-hover) !important;
+    }
+    .nav-item--active ion-icon {
+      color: var(--color-text-primary) !important;
+    }
+    .nav-item--active .nav-label {
+      color: var(--color-text-primary) !important;
+      font-weight: 600 !important;
+    }
+
+    .footer-toolbar {
+      --background: var(--surface-card);
+      border-top: 1px solid var(--color-border);
+      padding: 8px 10px;
+    }
+    .logout-action-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .logout-action-btn:hover {
+      background: rgba(220, 38, 38, 0.06);
+      color: #dc2626;
+      border-color: rgba(220, 38, 38, 0.2);
+    }
   `]
 })
 export class ShellComponent implements OnInit {

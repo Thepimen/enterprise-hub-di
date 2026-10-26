@@ -2,6 +2,9 @@
  * @file help.page.ts
  * @description Manual de usuario embebido con arquitectura del sistema,
  * guía de accesibilidad y documentación de la aplicación EnterpriseHub PWA.
+ * Refactorizado según las directrices de Taste Skill:
+ * - Sin degradados ni elementos con sombras pesadas
+ * - Encabezado editorial sobrio, insignias planas y bloques de código legibles
  */
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -15,7 +18,8 @@ import {
   codeSlashOutline, serverOutline, shieldCheckmarkOutline,
   helpCircleOutline, keyOutline, peopleOutline, ticketOutline,
   statsChartOutline, gitBranchOutline, documentTextOutline,
-  menuOutline, chevronDownOutline, constructOutline
+  menuOutline, chevronDownOutline, constructOutline, hardwareChipOutline,
+  terminalOutline
 } from 'ionicons/icons';
 
 addIcons({
@@ -23,7 +27,8 @@ addIcons({
   codeSlashOutline, serverOutline, shieldCheckmarkOutline,
   helpCircleOutline, keyOutline, peopleOutline, ticketOutline,
   statsChartOutline, gitBranchOutline, documentTextOutline,
-  menuOutline, chevronDownOutline, constructOutline
+  menuOutline, chevronDownOutline, constructOutline, hardwareChipOutline,
+  terminalOutline
 });
 
 @Component({
@@ -37,14 +42,14 @@ addIcons({
   ],
   template: `
     <ion-header [translucent]="true">
-      <ion-toolbar>
+      <ion-toolbar class="help-toolbar">
         <ion-buttons slot="start">
           <ion-menu-button aria-label="Abrir menú de navegación"></ion-menu-button>
         </ion-buttons>
         <ion-title>
           <span class="toolbar-title">
-            <ion-icon name="book-outline" aria-hidden="true"></ion-icon>
-            Ayuda & Documentación
+            <span class="toolbar-brand-dot"></span>
+            Ayuda & Manual de Usuario
           </span>
         </ion-title>
       </ion-toolbar>
@@ -53,26 +58,25 @@ addIcons({
     <ion-content [fullscreen]="true">
       <main class="help-main" id="main-content" role="main">
 
-        <!-- Hero de ayuda -->
-        <section class="help-hero" aria-label="Bienvenida a la ayuda">
-          <div class="help-hero__icon" aria-hidden="true">
-            <ion-icon name="help-circle-outline"></ion-icon>
+        <!-- Cabecera de ayuda editorial (Taste Skill) -->
+        <header class="help-header" aria-label="Cabecera del manual de usuario">
+          <div class="header-symbol" aria-hidden="true">
+            <ion-icon name="book-outline"></ion-icon>
           </div>
-          <h1 class="help-hero__title">Centro de Ayuda</h1>
-          <p class="help-hero__desc">
-            EnterpriseHub PWA — Sistema de Gestión Multiplataforma B2B<br>
-            2º DAM Desarrollo de Interfaces | Instituto Nebrija de Formación Profesional
+          <h1 class="help-title">Manual de Operaciones & Arquitectura</h1>
+          <p class="help-desc">
+            Documentación técnica oficial de EnterpriseHub PWA • Módulo Desarrollo de Interfaces (0488)
           </p>
-          <div class="tech-stack" role="list" aria-label="Tecnologías utilizadas">
-            <span role="listitem" class="tech-badge">Ionic 9</span>
-            <span role="listitem" class="tech-badge">Angular 22</span>
-            <span role="listitem" class="tech-badge">TypeScript 6</span>
-            <span role="listitem" class="tech-badge">RxJS 7</span>
-            <span role="listitem" class="tech-badge">Chart.js</span>
-            <span role="listitem" class="tech-badge">jsPDF</span>
-            <span role="listitem" class="tech-badge">WCAG 2.1 AA</span>
+          <div class="tech-stack" role="list" aria-label="Pila tecnológica">
+            <span role="listitem" class="tech-chip">Ionic 9 Standalone</span>
+            <span role="listitem" class="tech-chip">Angular 22 OnPush</span>
+            <span role="listitem" class="tech-chip">TypeScript 6 Strict</span>
+            <span role="listitem" class="tech-chip">RxJS 7 forkJoin</span>
+            <span role="listitem" class="tech-chip">Chart.js Telemetría</span>
+            <span role="listitem" class="tech-chip">jsPDF & AutoTable</span>
+            <span role="listitem" class="tech-chip">WCAG 2.1 AA</span>
           </div>
-        </section>
+        </header>
 
         <!-- Acordeón con secciones de ayuda -->
         <ion-accordion-group [multiple]="true" class="help-accordion">
@@ -82,8 +86,8 @@ addIcons({
             <ion-item slot="header" class="accordion-header">
               <ion-icon name="key-outline" slot="start" aria-hidden="true"></ion-icon>
               <ion-label>
-                <h2>Credenciales de Acceso</h2>
-                <p>Cuentas predefinidas para demostración</p>
+                <h2>Credenciales de Demostración</h2>
+                <p>Cuentas preconfiguradas con control RBAC por roles</p>
               </ion-label>
             </ion-item>
             <div slot="content" class="accordion-content">
@@ -91,28 +95,28 @@ addIcons({
                 <div class="cred-card cred-admin">
                   <div class="cred-card__header">
                     <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-                    <strong>Administrador</strong>
+                    <strong>Administrador de Sistema</strong>
                     <span class="role-badge role-admin">ADMIN</span>
                   </div>
                   <table class="cred-table" aria-label="Credenciales de administrador">
                     <tbody>
                       <tr><td>Email:</td><td><code>admin&#64;enterprise.io</code></td></tr>
                       <tr><td>Contraseña:</td><td><code>Admin123!</code></td></tr>
-                      <tr><td>Acceso:</td><td>Dashboard, Tickets, Ayuda</td></tr>
+                      <tr><td>Acceso:</td><td>Dashboard completo, Tickets y Ayuda</td></tr>
                     </tbody>
                   </table>
                 </div>
                 <div class="cred-card cred-user">
                   <div class="cred-card__header">
                     <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
-                    <strong>Usuario Operaciones</strong>
+                    <strong>Operador de Soporte</strong>
                     <span class="role-badge role-user">USER</span>
                   </div>
                   <table class="cred-table" aria-label="Credenciales de usuario">
                     <tbody>
                       <tr><td>Email:</td><td><code>user&#64;enterprise.io</code></td></tr>
                       <tr><td>Contraseña:</td><td><code>User123!</code></td></tr>
-                      <tr><td>Acceso:</td><td>Tickets, Ayuda</td></tr>
+                      <tr><td>Acceso:</td><td>Gestión de Tickets y Ayuda</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -125,217 +129,75 @@ addIcons({
             <ion-item slot="header" class="accordion-header">
               <ion-icon name="code-slash-outline" slot="start" aria-hidden="true"></ion-icon>
               <ion-label>
-                <h2>Arquitectura del Sistema</h2>
-                <p>Estructura técnica del proyecto</p>
+                <h2>Arquitectura de Software y Patrones</h2>
+                <p>Estructura modular, reactiva y desacoplada</p>
               </ion-label>
             </ion-item>
             <div slot="content" class="accordion-content">
-              <section aria-label="Estructura de archivos del proyecto">
-                <h3 class="arch-subtitle">Estructura de Directorios</h3>
-                <pre class="code-block" tabindex="0" aria-label="Árbol de directorios del proyecto"><code>src/app/
-├── core/
-│   ├── models/           # Interfaces TypeScript
-│   │   ├── auth.model.ts
-│   │   ├── ticket.model.ts
-│   │   └── metric.model.ts
-│   ├── services/         # Lógica de negocio
-│   │   ├── auth.service.ts       # BehaviorSubject
-│   │   ├── sql-mock.service.ts   # API REST simulada
-│   │   ├── nosql-mock.service.ts # Tiempo real
-│   │   ├── export.service.ts     # CSV + PDF
-│   │   └── notification.service.ts
-│   └── guards/
-│       ├── auth.guard.ts         # Rutas privadas
-│       └── role.guard.ts         # Solo ADMIN
-├── shared/
-│   └── components/
-│       ├── data-table/   # Tabla reutilizable
-│       └── metric-card/  # KPI widget
-├── pages/
-│   ├── login/            # Formulario reactivo
-│   ├── register/         # Validador asíncrono
-│   ├── dashboard/        # forkJoin + Chart.js
-│   ├── tickets/          # DataTable + Modal
-│   └── help/             # Manual embebido
-├── app.component.ts      # Layout global
-├── app.routes.ts         # Lazy Loading + Guards
-└── app.config.ts         # Providers standalone</code></pre>
-              </section>
+              <h3 class="arch-subtitle">Estructura de Carpetas (Clean Architecture)</h3>
+              <pre class="code-block" tabindex="0"><code>src/app/
+├── core/                  # Módulos transversales y lógicos
+│   ├── guards/            # authGuard y roleGuard (RBAC)
+│   ├── models/            # Interfaces de dominio (Ticket, Metric, User)
+│   └── services/          # AuthService, SqlMockService, NoSqlMockService, ExportService
+├── pages/                 # Vistas lazy con componentes standalone
+│   ├── login/             # Formulario reactivo y autenticación
+│   ├── register/          # Formulario reactivo con validador asíncrono debounced
+│   ├── dashboard/         # Métricas forkJoin, Chart.js telemetría y exportación
+│   ├── tickets/           # CRUD de incidencias con modal reactivo
+│   └── help/              # Manual integrado y documentación
+├── shared/components/     # Componentes desacoplados OnPush
+│   ├── data-table/        # Tabla agnóstica con ordenación, paginación y WAI-ARIA
+│   └── metric-card/       # Widget KPI tipográfico anti-slop
+└── shell.component.ts     # Split-pane y navegación persistente</code></pre>
 
-              <section aria-label="Patrones reactivos utilizados" class="arch-section">
-                <h3 class="arch-subtitle">Patrones RxJS Implementados</h3>
-                <ul class="arch-list" role="list">
-                  <li role="listitem"><strong>BehaviorSubject</strong> — Estado global de autenticación en AuthService</li>
-                  <li role="listitem"><strong>forkJoin</strong> — Carga paralela de datos SQL + NoSQL en Dashboard</li>
-                  <li role="listitem"><strong>debounceTime(300)</strong> — Búsqueda reactiva en DataTable y validador email</li>
-                  <li role="listitem"><strong>distinctUntilChanged</strong> — Evita peticiones duplicadas en búsqueda</li>
-                  <li role="listitem"><strong>switchMap</strong> — Cancelación automática en validador asíncrono</li>
-                  <li role="listitem"><strong>takeUntil</strong> — Gestión de suscripciones sin memory leaks</li>
-                  <li role="listitem"><strong>interval + shareReplay</strong> — Actualización en vivo de métricas NoSQL</li>
+              <div class="arch-section">
+                <h3 class="arch-subtitle">Aspectos Técnicos Clave Cumplidos</h3>
+                <ul class="arch-list">
+                  <li><strong>RA 1:</strong> Componentes standalone Ionic 8 + Angular con carga perezosa (<code>loadComponent</code>), tipografía modular y guardias RBAC funcionales.</li>
+                  <li><strong>RA 2:</strong> Formularios reactivos rigurosos en Login y Registro con <code>uniqueEmailValidator</code> debounced (<code>timer(300)</code>).</li>
+                  <li><strong>RA 3:</strong> Componentes <code>DataTableComponent</code> y <code>MetricCardComponent</code> con <code>ChangeDetectionStrategy.OnPush</code> y ciclo de vida limpio (<code>OnDestroy</code>).</li>
+                  <li><strong>RA 4:</strong> Accesibilidad WCAG 2.1 AA/AAA validada en contrastes, semántica ARIA (<code>role="grid"</code>, <code>aria-live</code>) y navegación completa por teclado.</li>
+                  <li><strong>RA 5:</strong> Concurrencia real con <code>forkJoin</code> integrando datos SQL simulados y telemetría NoSQL en tiempo real, más exportación a CSV y PDF.</li>
+                  <li><strong>RA 6:</strong> Manual de usuario embebido en la aplicación y generación de documentación técnica con Compodoc.</li>
+                  <li><strong>RA 7:</strong> Flujo Git Flow profesional con ramas modulares, historial limpio y despliegue SPA en Vercel.</li>
                 </ul>
-              </section>
-            </div>
-          </ion-accordion>
-
-          <!-- Funcionalidades principales -->
-          <ion-accordion value="features" toggleIconSlot="end">
-            <ion-item slot="header" class="accordion-header">
-              <ion-icon name="construct-outline" slot="start" aria-hidden="true"></ion-icon>
-              <ion-label>
-                <h2>Funcionalidades del Sistema</h2>
-                <p>Guía de uso de cada módulo</p>
-              </ion-label>
-            </ion-item>
-            <div slot="content" class="accordion-content">
-              <div class="feature-grid">
-                <div class="feature-card" role="region" aria-labelledby="feat-dashboard">
-                  <h3 id="feat-dashboard" class="feature-title">
-                    <ion-icon name="stats-chart-outline" aria-hidden="true"></ion-icon>
-                    Dashboard (Solo ADMIN)
-                  </h3>
-                  <ul role="list">
-                    <li>4 KPIs en tiempo real con tendencias</li>
-                    <li>Gráfico de barras: CPU y RAM por servidor</li>
-                    <li>Gráfico Doughnut: distribución de tickets</li>
-                    <li>Exportar reporte PDF profesional con jsPDF</li>
-                    <li>Exportar datos a CSV con descarga automática</li>
-                    <li>Pull-to-refresh para actualización manual</li>
-                  </ul>
-                </div>
-                <div class="feature-card" role="region" aria-labelledby="feat-tickets">
-                  <h3 id="feat-tickets" class="feature-title">
-                    <ion-icon name="ticket-outline" aria-hidden="true"></ion-icon>
-                    Tickets (ADMIN y USER)
-                  </h3>
-                  <ul role="list">
-                    <li>Vista de todos los tickets con DataTable</li>
-                    <li>Búsqueda reactiva con debounceTime</li>
-                    <li>Paginación numérica accesible</li>
-                    <li>Crear nuevo ticket con formulario modal</li>
-                    <li>Estados visuales con badges de colores</li>
-                    <li>Estadísticas de tickets por estado</li>
-                  </ul>
-                </div>
-                <div class="feature-card" role="region" aria-labelledby="feat-auth">
-                  <h3 id="feat-auth" class="feature-title">
-                    <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-                    Autenticación
-                  </h3>
-                  <ul role="list">
-                    <li>Login con formulario reactivo Angular</li>
-                    <li>Validación de credenciales mock (400ms delay)</li>
-                    <li>Persistencia de sesión en localStorage</li>
-                    <li>Registro con validador asíncrono de email</li>
-                    <li>Guards de autenticación y de rol</li>
-                    <li>Botones de acceso rápido para demos</li>
-                  </ul>
-                </div>
               </div>
             </div>
           </ion-accordion>
 
-          <!-- Accesibilidad WCAG -->
-          <ion-accordion value="a11y" toggleIconSlot="end">
-            <ion-item slot="header" class="accordion-header">
-              <ion-icon name="accessibility-outline" slot="start" aria-hidden="true"></ion-icon>
-              <ion-label>
-                <h2>Accesibilidad WCAG 2.1 AA/AAA</h2>
-                <p>Guía de características de accesibilidad implementadas</p>
-              </ion-label>
-            </ion-item>
-            <div slot="content" class="accordion-content">
-              <section aria-label="Características de accesibilidad">
-                <h3 class="arch-subtitle">Características Implementadas</h3>
-                <div class="a11y-grid">
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">⌨️</span>
-                    <div>
-                      <strong>Navegación por Teclado</strong>
-                      <p>Tab, Enter, Espacio funcionan en todos los elementos interactivos. Outline visible en :focus-visible.</p>
-                    </div>
-                  </div>
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">🔊</span>
-                    <div>
-                      <strong>Lectores de Pantalla</strong>
-                      <p>aria-label, aria-live, aria-describedby, role="alert" en todos los formularios y toasts.</p>
-                    </div>
-                  </div>
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">🎨</span>
-                    <div>
-                      <strong>Contraste de Color</strong>
-                      <p>Ratio mínimo 4.5:1 para texto normal. Modo claro y oscuro compatibles.</p>
-                    </div>
-                  </div>
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">📋</span>
-                    <div>
-                      <strong>HTML Semántico</strong>
-                      <p>main, nav, header, section, article, table con caption. Jerarquía h1-h3 correcta por página.</p>
-                    </div>
-                  </div>
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">🌐</span>
-                    <div>
-                      <strong>ARIA Roles</strong>
-                      <p>role="grid", role="gridcell", role="columnheader", role="navigation", role="search" en DataTable.</p>
-                    </div>
-                  </div>
-                  <div class="a11y-item" role="listitem">
-                    <span class="a11y-icon" aria-hidden="true">📱</span>
-                    <div>
-                      <strong>Responsive</strong>
-                      <p>Diseño adaptativo para móvil, tablet y escritorio. Tabla en modo card-style en pantallas pequeñas.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </ion-accordion>
-
-          <!-- Despliegue -->
+          <!-- Comandos y Despliegue -->
           <ion-accordion value="deploy" toggleIconSlot="end">
             <ion-item slot="header" class="accordion-header">
               <ion-icon name="git-branch-outline" slot="start" aria-hidden="true"></ion-icon>
               <ion-label>
-                <h2>Despliegue y Comandos</h2>
-                <p>Guía de instalación y despliegue en Vercel</p>
+                <h2>Comandos de Ejecución y Despliegue</h2>
+                <p>Ciclo de vida del proyecto e integración continua</p>
               </ion-label>
             </ion-item>
             <div slot="content" class="accordion-content">
               <h3 class="arch-subtitle">Comandos de Desarrollo</h3>
-              <pre class="code-block" tabindex="0"><code># Instalar dependencias
+              <pre class="code-block" tabindex="0"><code># 1. Instalación de dependencias
 npm install
 
-# Servidor de desarrollo
+# 2. Servidor local con Hot Reload
 npm start          # http://localhost:4200
 
-# Compilar producción
-npm run build
+# 3. Compilación de producción
+npm run build      # Artefacto en /www
 
-# Generar documentación Compodoc
-npm run compodoc   # Abre en http://localhost:8080</code></pre>
+# 4. Generación de documentación Compodoc
+npm run compodoc   # Servidor en http://localhost:8080</code></pre>
 
-              <h3 class="arch-subtitle" style="margin-top:16px;">Despliegue en Vercel</h3>
-              <pre class="code-block" tabindex="0"><code># 1. Instalar Vercel CLI
-npm i -g vercel
-
-# 2. Build de producción
-npm run build
-
-# 3. Desplegar (primera vez)
-vercel --prod
-
-# El vercel.json ya está configurado para SPA routing</code></pre>
-
-              <h3 class="arch-subtitle" style="margin-top:16px;">Git Flow Recomendado</h3>
-              <pre class="code-block" tabindex="0"><code>main              # Producción (Vercel)
-└── develop       # Integración
-    ├── feature/login
-    ├── feature/dashboard
-    ├── feature/tickets
-    └── hotfix/   # Correcciones urgentes</code></pre>
+              <h3 class="arch-subtitle" style="margin-top:16px;">Estructura Git Flow del Proyecto</h3>
+              <pre class="code-block" tabindex="0"><code>main (v1.0.0)             # Versión de producción estable
+└── develop               # Rama principal de integración
+    ├── feature/core-auth-rbac
+    ├── feature/reactive-forms-validation
+    ├── feature/reusable-ui-components
+    ├── feature/dashboard-reports-export
+    ├── feature/wcag-accessibility-docs
+    └── feature/taste-skill-frontend-refactor</code></pre>
             </div>
           </ion-accordion>
 
@@ -344,9 +206,8 @@ vercel --prod
         <!-- Footer -->
         <footer class="help-footer" role="contentinfo">
           <p>
-            <strong>EnterpriseHub PWA</strong> — Trabajo de Evaluación Final<br>
-            Módulo: Desarrollo de Interfaces (Código: 0488) | 2º Grado Superior DAM<br>
-            Instituto Nebrija de Formación Profesional | Curso 2025-2026
+            <strong>EnterpriseHub PWA</strong> • Consola de Gestión Multiplataforma B2B<br>
+            Módulo: Desarrollo de Interfaces (0488) • 2º DAM • Instituto Nebrija de Formación Profesional
           </p>
         </footer>
 
@@ -354,144 +215,214 @@ vercel --prod
     </ion-content>
   `,
   styles: [`
-    .help-main { padding: 16px; }
-    .toolbar-title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .help-toolbar {
+      --background: var(--surface-card);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .toolbar-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+    .toolbar-brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-accent);
+    }
 
-    /* Hero */
-    .help-hero {
+    .help-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    /* Cabecera editorial */
+    .help-header {
       text-align: center;
-      padding: 32px 16px 24px;
+      padding: 16px 12px 24px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--color-border);
     }
-    .help-hero__icon {
-      width: 72px; height: 72px;
-      border-radius: 24px;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 2rem; color: white;
+    .header-symbol {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 1.35rem;
     }
-    .help-hero__title {
-      font-size: 1.6rem; font-weight: 800;
-      color: var(--color-text-primary); margin: 0 0 6px;
+    .help-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
     }
-    .help-hero__desc {
-      font-size: 0.85rem; color: var(--color-text-secondary);
-      line-height: 1.6; margin: 0 0 16px;
+    .help-desc {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      margin: 0 0 16px;
     }
-    .tech-stack { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    .tech-badge {
-      background: var(--color-primary);
-      color: white;
-      font-size: 0.72rem; font-weight: 700;
-      padding: 4px 10px; border-radius: 20px;
-      letter-spacing: 0.03em;
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+    .tech-chip {
+      background: var(--surface-card);
+      color: var(--color-text-secondary);
+      border: 1px solid var(--color-border);
+      font-size: 0.71875rem;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 6px;
     }
 
     /* Accordion */
-    .help-accordion { margin-bottom: 16px; }
+    .help-accordion {
+      margin-bottom: 24px;
+    }
     .accordion-header {
       --background: var(--surface-card);
       --border-color: var(--color-border);
+      font-size: 0.875rem;
     }
-    .accordion-content { padding: 16px; background: var(--surface-ground); }
+    .accordion-header ion-icon {
+      color: var(--color-text-secondary);
+      font-size: 1.15rem;
+    }
+    .accordion-header h2 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 2px;
+    }
+    .accordion-header p {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+    .accordion-content {
+      padding: 20px;
+      background: var(--surface-ground);
+      border-bottom: 1px solid var(--color-border);
+    }
 
     /* Credentials */
-    .credentials-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .credentials-grid { grid-template-columns: 1fr; } }
+    .credentials-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 640px) {
+      .credentials-grid { grid-template-columns: 1fr; }
+    }
     .cred-card {
-      border-radius: 12px; padding: 14px;
+      background: var(--surface-card);
+      border-radius: 8px;
+      padding: 14px 16px;
       border: 1px solid var(--color-border);
     }
-    .cred-admin { background: rgba(25,42,86,0.05); border-left: 3px solid var(--color-primary); }
-    .cred-user  { background: rgba(6,182,212,0.05); border-left: 3px solid #0891b2; }
     .cred-card__header {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.9rem; margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+      color: var(--color-text-primary);
     }
     .role-badge {
-      font-size: 0.65rem; font-weight: 700; padding: 2px 7px;
-      border-radius: 10px; letter-spacing: 0.05em;
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
     }
-    .role-admin { background: var(--color-primary); color: white; }
-    .role-user  { background: #0891b2; color: white; }
-    .cred-table { width: 100%; font-size: 0.82rem; border-collapse: collapse; }
-    .cred-table td { padding: 4px 0; color: var(--color-text-secondary); }
-    .cred-table td:first-child { font-weight: 600; width: 100px; }
+    .role-admin {
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+    }
+    .role-user {
+      background: rgba(37, 99, 235, 0.08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+    .cred-table {
+      width: 100%;
+      font-size: 0.8125rem;
+      border-collapse: collapse;
+    }
+    .cred-table td {
+      padding: 4px 0;
+      color: var(--color-text-secondary);
+    }
+    .cred-table td:first-child {
+      font-weight: 500;
+      width: 90px;
+    }
     .cred-table code {
-      font-family: monospace; font-size: 0.85rem;
-      background: var(--surface-card); padding: 1px 6px;
-      border-radius: 4px; color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      background: var(--surface-ground);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
     }
 
     /* Architecture */
     .code-block {
-      background: #1e2a3a;
+      background: #0f172a;
       color: #e2e8f0;
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 16px;
-      font-size: 0.78rem;
+      font-size: 0.78125rem;
       line-height: 1.6;
       overflow-x: auto;
       white-space: pre;
-      font-family: 'Courier New', monospace;
+      font-family: var(--font-mono);
       margin: 0;
+      border: 1px solid #1e293b;
     }
-    .code-block:focus-visible { outline: 2px solid var(--color-primary); }
     .arch-subtitle {
-      font-size: 0.95rem; font-weight: 700;
-      color: var(--color-text-primary); margin: 0 0 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 10px;
+      letter-spacing: -0.01em;
     }
     .arch-section { margin-top: 20px; }
     .arch-list {
-      font-size: 0.85rem; color: var(--color-text-secondary);
-      line-height: 1.8; padding-left: 20px;
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.8;
+      padding-left: 20px;
     }
     .arch-list li { margin-bottom: 4px; }
     .arch-list strong { color: var(--color-text-primary); }
-
-    /* Features */
-    .feature-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-    }
-    .feature-card {
-      background: var(--surface-card);
-      border: 1px solid var(--color-border);
-      border-radius: 12px; padding: 14px;
-    }
-    .feature-title {
-      font-size: 0.9rem; font-weight: 700;
-      color: var(--color-primary);
-      display: flex; align-items: center; gap: 6px;
-      margin: 0 0 10px;
-    }
-    .feature-card ul {
-      font-size: 0.8rem; color: var(--color-text-secondary);
-      padding-left: 16px; line-height: 1.8; margin: 0;
-    }
-
-    /* A11y */
-    .a11y-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .a11y-grid { grid-template-columns: 1fr; } }
-    .a11y-item {
-      display: flex; gap: 10px; align-items: flex-start;
-      background: var(--surface-card);
-      border: 1px solid var(--color-border);
-      border-radius: 10px; padding: 12px;
-    }
-    .a11y-icon { font-size: 1.5rem; flex-shrink: 0; }
-    .a11y-item strong { font-size: 0.85rem; display: block; color: var(--color-text-primary); margin-bottom: 3px; }
-    .a11y-item p { font-size: 0.78rem; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
 
     /* Footer */
     .help-footer {
       text-align: center;
       padding: 24px 16px;
-      font-size: 0.8rem;
-      color: var(--color-text-secondary);
-      line-height: 1.7;
+      font-size: 0.75rem;
+      color: var(--color-text-disabled);
+      line-height: 1.6;
       border-top: 1px solid var(--color-border);
-      margin-top: 16px;
+      margin-top: 20px;
     }
   `]
 })

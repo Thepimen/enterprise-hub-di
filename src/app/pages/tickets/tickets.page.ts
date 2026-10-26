@@ -1,7 +1,10 @@
 /**
  * @file tickets.page.ts
  * @description Página de gestión de tickets accesible para ADMIN y USER.
- * Muestra DataTable reutilizable y permite crear nuevos tickets mediante modal reactivo.
+ * Refactorizado según las directrices de Taste Skill:
+ * - Sin emojis en opciones de selección ("tells.md")
+ * - Contadores de estado tipográficos planos con borde de 1px
+ * - Tabla desacoplada con encabezados de regla y acciones funcionales
  */
 import {
   Component, OnInit, OnDestroy, inject,
@@ -52,13 +55,13 @@ addIcons({
   ],
   template: `
     <ion-header [translucent]="true">
-      <ion-toolbar>
+      <ion-toolbar class="tickets-toolbar">
         <ion-buttons slot="start">
           <ion-menu-button aria-label="Abrir menú de navegación"></ion-menu-button>
         </ion-buttons>
         <ion-title>
           <span class="toolbar-title">
-            <ion-icon name="ticket-outline" aria-hidden="true"></ion-icon>
+            <span class="toolbar-brand-dot"></span>
             Tickets Técnicos
           </span>
         </ion-title>
@@ -67,18 +70,19 @@ addIcons({
             (click)="loadTickets()"
             fill="clear"
             aria-label="Actualizar lista de tickets"
+            title="Refrescar lista"
+            class="header-action-btn"
           >
             <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
           </ion-button>
-          <ion-button
+          <button
             (click)="openModal()"
-            fill="solid"
-            color="primary"
-            aria-label="Crear nuevo ticket"
+            class="primary-create-btn"
+            aria-label="Registrar nuevo ticket"
           >
-            <ion-icon name="add-outline" slot="start" aria-hidden="true"></ion-icon>
-            Nuevo
-          </ion-button>
+            <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+            <span>Nuevo Ticket</span>
+          </button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -90,21 +94,31 @@ addIcons({
 
       <main class="tickets-main" id="main-content" role="main">
 
-        <!-- Cabecera con estadísticas -->
-        <section class="tickets-header" aria-label="Estadísticas de tickets">
-          <h1 class="tickets-title">Centro de Incidencias</h1>
+        <!-- Cabecera con estadísticas tipográficas (Taste Skill) -->
+        <header class="tickets-header" aria-label="Estadísticas de tickets">
+          <div>
+            <div class="header-breadcrumbs">
+              <span class="bc-root">Soporte</span>
+              <span class="bc-sep">/</span>
+              <span class="bc-current">Gestión de Incidencias</span>
+            </div>
+            <h1 class="tickets-title">Centro de Incidencias</h1>
+            <p class="tickets-subtitle">Seguimiento de incidencias de infraestructura y peticiones de servicio</p>
+          </div>
+
           <div class="ticket-stats" role="group" aria-label="Resumen de estado de tickets">
-            <div *ngFor="let stat of stats" class="stat-item" [attr.aria-label]="stat.label + ': ' + stat.count">
-              <span class="stat-count" [class]="'stat-count--' + stat.color">{{ stat.count }}</span>
+            <div *ngFor="let stat of stats" class="stat-pill" [attr.aria-label]="stat.label + ': ' + stat.count">
+              <span class="stat-indicator" [class]="'ind--' + stat.color" aria-hidden="true"></span>
               <span class="stat-label">{{ stat.label }}</span>
+              <span class="stat-count">{{ stat.count }}</span>
             </div>
           </div>
-        </section>
+        </header>
 
         <!-- Loading -->
         <div *ngIf="isLoading" class="loading-block" role="status" aria-live="polite">
           <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-          <span>Cargando tickets...</span>
+          <span>Consultando repositorio de incidencias...</span>
         </div>
 
         <!-- DataTable reutilizable -->
@@ -122,7 +136,7 @@ addIcons({
         </section>
       </main>
 
-      <!-- FAB para crear ticket (mobile) -->
+      <!-- FAB para crear ticket en mobile -->
       <ion-fab slot="fixed" vertical="bottom" horizontal="end" aria-label="Crear nuevo ticket">
         <ion-fab-button (click)="openModal()" color="primary" aria-label="Abrir formulario de nuevo ticket">
           <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
@@ -130,7 +144,7 @@ addIcons({
       </ion-fab>
     </ion-content>
 
-    <!-- ==================== MODAL: Nuevo Ticket ==================== -->
+    <!-- Modal: Nuevo Ticket -->
     <ion-modal
       [isOpen]="isModalOpen"
       (didDismiss)="closeModal()"
@@ -140,17 +154,10 @@ addIcons({
     >
       <ng-template>
         <ion-header>
-          <ion-toolbar>
-            <ion-title>
-              <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
-              Nuevo Ticket
-            </ion-title>
+          <ion-toolbar class="modal-toolbar">
+            <ion-title>Registrar Nueva Incidencia</ion-title>
             <ion-buttons slot="end">
-              <ion-button
-                (click)="closeModal()"
-                fill="clear"
-                aria-label="Cerrar modal de creación de ticket"
-              >
+              <ion-button (click)="closeModal()" aria-label="Cerrar modal de creación de ticket">
                 <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
               </ion-button>
             </ion-buttons>
@@ -158,86 +165,77 @@ addIcons({
         </ion-header>
 
         <ion-content class="modal-content">
-          <form
-            [formGroup]="ticketForm"
-            (ngSubmit)="submitTicket()"
-            novalidate
-            class="ticket-form"
-            aria-label="Formulario de creación de ticket"
-          >
+          <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" novalidate class="ticket-form">
 
             <!-- Título -->
             <div class="form-field">
-              <label for="tkt-title" class="form-label">Título del ticket *</label>
+              <label for="tkt-title" class="form-label">Título de la incidencia *</label>
               <ion-input
                 id="tkt-title"
-                type="text"
                 formControlName="title"
-                placeholder="Describe brevemente el problema..."
+                placeholder="Descripción breve del problema"
                 [class.input-error]="isInvalid('title')"
                 aria-required="true"
                 class="modal-input"
               ></ion-input>
-              <p *ngIf="isInvalid('title')" role="alert" class="form-error">
-                El título es obligatorio (mínimo 5 caracteres).
-              </p>
+              <p *ngIf="isInvalid('title')" role="alert" class="form-error">El título es obligatorio (mínimo 5 caracteres).</p>
             </div>
 
             <!-- Descripción -->
             <div class="form-field">
-              <label for="tkt-desc" class="form-label">Descripción detallada *</label>
+              <label for="tkt-desc" class="form-label">Detalle técnico *</label>
               <ion-textarea
                 id="tkt-desc"
                 formControlName="description"
-                placeholder="Describe el problema con detalle, pasos para reproducir, sistemas afectados..."
+                placeholder="Pasos para reproducir, servicios afectados y comportamiento observado..."
                 [rows]="4"
                 [class.input-error]="isInvalid('description')"
                 aria-required="true"
-                class="modal-input"
+                class="modal-input modal-textarea"
               ></ion-textarea>
               <p *ngIf="isInvalid('description')" role="alert" class="form-error">
-                La descripción es obligatoria (mínimo 20 caracteres).
+                La descripción debe tener al menos 10 caracteres.
               </p>
             </div>
 
-            <!-- Prioridad y Categoría -->
+            <!-- Prioridad y Categoría (Sin emojis: Taste Skill tells.md) -->
             <ion-grid class="form-grid">
               <ion-row>
                 <ion-col size="12" size-sm="6">
                   <div class="form-field">
-                    <label for="tkt-priority" class="form-label">Prioridad *</label>
+                    <label for="tkt-priority" class="form-label">Nivel de Prioridad *</label>
                     <ion-select
                       id="tkt-priority"
                       formControlName="priority"
-                      placeholder="Selecciona prioridad"
+                      placeholder="Seleccionar prioridad"
                       aria-required="true"
                       interface="popover"
                       class="modal-select"
                     >
-                      <ion-select-option value="LOW">🟢 Baja</ion-select-option>
-                      <ion-select-option value="MEDIUM">🟡 Media</ion-select-option>
-                      <ion-select-option value="HIGH">🟠 Alta</ion-select-option>
-                      <ion-select-option value="CRITICAL">🔴 Crítica</ion-select-option>
+                      <ion-select-option value="LOW">Baja (Sin impacto crítico)</ion-select-option>
+                      <ion-select-option value="MEDIUM">Media (Impacto moderado)</ion-select-option>
+                      <ion-select-option value="HIGH">Alta (Degradación de servicio)</ion-select-option>
+                      <ion-select-option value="CRITICAL">Crítica (Interrupción total)</ion-select-option>
                     </ion-select>
                     <p *ngIf="isInvalid('priority')" role="alert" class="form-error">Selecciona una prioridad.</p>
                   </div>
                 </ion-col>
                 <ion-col size="12" size-sm="6">
                   <div class="form-field">
-                    <label for="tkt-category" class="form-label">Categoría *</label>
+                    <label for="tkt-category" class="form-label">Categoría del Sistema *</label>
                     <ion-select
                       id="tkt-category"
                       formControlName="category"
-                      placeholder="Selecciona categoría"
+                      placeholder="Seleccionar categoría"
                       aria-required="true"
                       interface="popover"
                       class="modal-select"
                     >
-                      <ion-select-option value="HARDWARE">🖥️ Hardware</ion-select-option>
-                      <ion-select-option value="SOFTWARE">💾 Software</ion-select-option>
-                      <ion-select-option value="NETWORK">🌐 Red</ion-select-option>
-                      <ion-select-option value="SECURITY">🔒 Seguridad</ion-select-option>
-                      <ion-select-option value="OTHER">📋 Otro</ion-select-option>
+                      <ion-select-option value="HARDWARE">Infraestructura & Hardware</ion-select-option>
+                      <ion-select-option value="SOFTWARE">Aplicación & Software</ion-select-option>
+                      <ion-select-option value="NETWORK">Conectividad & Red</ion-select-option>
+                      <ion-select-option value="SECURITY">Ciberseguridad & Acceso</ion-select-option>
+                      <ion-select-option value="OTHER">General & Otras peticiones</ion-select-option>
                     </ion-select>
                     <p *ngIf="isInvalid('category')" role="alert" class="form-error">Selecciona una categoría.</p>
                   </div>
@@ -247,24 +245,23 @@ addIcons({
 
             <!-- Botones de acción -->
             <div class="form-actions">
-              <ion-button
+              <button
                 type="button"
-                fill="outline"
+                class="modal-btn-cancel"
                 (click)="closeModal()"
                 aria-label="Cancelar creación de ticket"
               >
                 Cancelar
-              </ion-button>
-              <ion-button
+              </button>
+              <button
                 type="submit"
-                fill="solid"
+                class="modal-btn-submit"
                 [disabled]="ticketForm.invalid || isSaving"
                 aria-label="Guardar nuevo ticket"
               >
                 <ion-spinner *ngIf="isSaving" name="crescent" aria-hidden="true"></ion-spinner>
-                <ion-icon *ngIf="!isSaving" name="checkmark-circle-outline" slot="start" aria-hidden="true"></ion-icon>
-                {{ isSaving ? 'Guardando...' : 'Crear Ticket' }}
-              </ion-button>
+                <span *ngIf="!isSaving">Crear Ticket</span>
+              </button>
             </div>
           </form>
         </ion-content>
@@ -272,61 +269,197 @@ addIcons({
     </ion-modal>
   `,
   styles: [`
-    .tickets-main { padding: 16px; }
-    .toolbar-title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-    .tickets-header { margin-bottom: 20px; }
-    .tickets-title {
-      font-size: 1.4rem; font-weight: 800;
-      color: var(--color-text-primary); margin: 0 0 16px;
+    .tickets-toolbar {
+      --background: var(--surface-card);
+      border-bottom: 1px solid var(--color-border);
     }
-    .ticket-stats { display: flex; flex-wrap: wrap; gap: 12px; }
-    .stat-item {
-      display: flex; flex-direction: column; align-items: center;
-      background: var(--surface-card); border: 1px solid var(--color-border);
-      border-radius: 12px; padding: 12px 20px; min-width: 80px;
+    .toolbar-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
     }
-    .stat-count {
-      font-size: 1.6rem; font-weight: 800; line-height: 1;
+    .toolbar-brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-accent);
+    }
+    .header-action-btn {
+      --color: var(--color-text-secondary);
+    }
+    .primary-create-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #0f172a;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 8px;
+      transition: background-color 0.12s;
+    }
+    .primary-create-btn:hover { background: #1e293b; }
+
+    .tickets-main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+    .tickets-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 24px;
+    }
+    .header-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
       margin-bottom: 4px;
     }
-    .stat-count--red    { color: #ef4444; }
-    .stat-count--orange { color: #f59e0b; }
-    .stat-count--green  { color: #10b981; }
-    .stat-count--gray   { color: #6b7280; }
-    .stat-label { font-size: 0.72rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-    .loading-block {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; padding: 48px; color: var(--color-text-secondary);
+    .bc-sep { color: var(--color-text-disabled); }
+    .bc-current { color: var(--color-text-primary); font-weight: 500; }
+    .tickets-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
     }
-    /* Modal */
-    .modal-content { --padding-start: 16px; --padding-end: 16px; }
-    .ticket-form { padding: 16px 0; }
-    .form-field { margin-bottom: 18px; }
+    .tickets-subtitle {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+
+    /* Resumen de estados tipográfico (Taste Skill) */
+    .ticket-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+    .stat-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .ind--red    { background: #dc2626; }
+    .ind--orange { background: #d97706; }
+    .ind--green  { background: #059669; }
+    .ind--gray   { background: #64748b; }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+    .stat-count {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .loading-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 48px;
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+    }
+
+    /* Modal Form */
+    .modal-toolbar {
+      --background: var(--surface-card);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .modal-content {
+      --background: var(--surface-card);
+      --padding-start: 20px;
+      --padding-end: 20px;
+    }
+    .ticket-form { padding: 18px 0; }
+    .form-field { margin-bottom: 16px; }
     .form-label {
-      display: block; font-size: 0.82rem; font-weight: 600;
-      color: var(--color-text-secondary); margin-bottom: 6px;
-      text-transform: uppercase; letter-spacing: 0.04em;
+      display: block;
+      font-size: 0.78125rem;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: 5px;
     }
     .modal-input {
-      --border-radius: 10px;
+      --border-radius: 6px;
       --border-color: var(--color-border);
-      --background: var(--surface-ground);
+      --background: var(--surface-card);
       --color: var(--color-text-primary);
-      border: 1px solid var(--color-border); border-radius: 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      min-height: 40px;
     }
-    .modal-input.input-error { border-color: var(--ion-color-danger) !important; }
+    .modal-input:focus-within { border-color: #0f172a; }
+    .modal-textarea { min-height: 90px; }
     .modal-select {
-      --border-radius: 10px;
-      border: 1px solid var(--color-border); border-radius: 10px;
-      background: var(--surface-ground);
+      --border-radius: 6px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      background: var(--surface-card);
+      font-size: 0.875rem;
     }
     .form-grid { padding: 0; }
-    .form-error { color: var(--ion-color-danger); font-size: 0.78rem; margin: 4px 0 0; }
+    .form-error { color: #dc2626; font-size: 0.75rem; margin: 4px 0 0; }
+
     .form-actions {
-      display: flex; gap: 12px; justify-content: flex-end;
-      margin-top: 24px; padding-top: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 16px;
       border-top: 1px solid var(--color-border);
     }
+    .modal-btn-cancel {
+      padding: 8px 14px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .modal-btn-submit {
+      padding: 8px 16px;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #0f172a;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .modal-btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
   `]
 })
 export class TicketsPage implements OnInit, OnDestroy {
@@ -349,13 +482,13 @@ export class TicketsPage implements OnInit, OnDestroy {
     { key: 'title',    label: 'Título',   sortable: true  },
     { key: 'status',   label: 'Estado',   sortable: true  },
     { key: 'priority', label: 'Prioridad', sortable: true },
-    { key: 'category', label: 'Categoría' },
-    { key: 'createdAt', label: 'Creado'  },
+    { key: 'category', label: 'Categoría', sortable: false },
+    { key: 'createdAt', label: 'Fecha',   sortable: true  },
   ];
 
   readonly tableActions: RowAction[] = [
-    { key: 'view',   label: 'Ver detalle', icon: 'eye-outline',    color: 'primary' },
-    { key: 'update', label: 'Actualizar',  icon: 'create-outline', color: 'secondary' },
+    { key: 'view',   label: 'Ver detalle', icon: 'eye-outline' },
+    { key: 'edit',   label: 'Editar',      icon: 'create-outline' },
   ];
 
   ngOnInit(): void {
@@ -372,58 +505,55 @@ export class TicketsPage implements OnInit, OnDestroy {
     this.isLoading = true;
     this.cdr.markForCheck();
 
-    this.sqlService.getTickets().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (list) => {
-        // Aplanar las fechas para que DataTable las muestre correctamente
-        this.tickets = list.map((t) => ({
-          ...t,
-          createdAt: new Date(t.createdAt).toLocaleDateString('es-ES'),
-        })) as Record<string, unknown>[];
+    this.sqlService.getTickets()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.tickets = data as unknown as Record<string, unknown>[];
+          this.computeStats(data);
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.notif.error('Error al cargar la lista de tickets.');
+          this.cdr.markForCheck();
+        },
+      });
+  }
 
-        this.buildStats(list);
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.isLoading = false;
-        this.notif.error('Error al cargar los tickets.');
-        this.cdr.markForCheck();
-      },
-    });
+  onRefresh(event: CustomEvent): void {
+    this.loadTickets();
+    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 1000);
   }
 
   openModal(): void {
-    this.ticketForm.reset();
+    this.initForm();
     this.isModalOpen = true;
-    this.cdr.markForCheck();
   }
 
   closeModal(): void {
     this.isModalOpen = false;
-    this.cdr.markForCheck();
+    this.ticketForm.reset();
   }
 
-  submitTicket(): void {
+  onSubmit(): void {
     if (this.ticketForm.invalid) {
       this.ticketForm.markAllAsTouched();
       return;
     }
     this.isSaving = true;
-    const userId = this.authService.currentUser?.id ?? 'unknown';
-    const payload: CreateTicketPayload = {
-      title: this.ticketForm.value.title,
-      description: this.ticketForm.value.description,
-      priority: this.ticketForm.value.priority,
-      category: this.ticketForm.value.category,
-    };
 
-    this.sqlService.createTicket(payload, userId)
+    const payload: CreateTicketPayload = this.ticketForm.value;
+    const author = this.authService.currentUser?.name ?? 'Usuario';
+
+    this.sqlService.createTicket(payload, author)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
+        next: (newTicket) => {
           this.isSaving = false;
           this.closeModal();
-          this.notif.success('Ticket creado exitosamente.');
+          this.notif.success(`Ticket ${newTicket.id} registrado correctamente.`);
           this.loadTickets();
         },
         error: () => {
@@ -435,42 +565,38 @@ export class TicketsPage implements OnInit, OnDestroy {
   }
 
   onRowSelected(row: Record<string, unknown>): void {
-    this.notif.info(`Ticket seleccionado: ${row['id']} - ${row['title']}`);
+    this.notif.info(`Ticket seleccionado: [${row['id']}] ${row['title']}`);
   }
 
   onAction(event: { action: string; row: Record<string, unknown> }): void {
-    if (event.action === 'view') {
-      this.notif.info(`Ver detalle ticket: ${event.row['id']}`);
-    } else if (event.action === 'update') {
-      this.notif.warning(`Actualizar ticket: ${event.row['id']}`);
+    const { action, row } = event;
+    if (action === 'view') {
+      this.notif.info(`Detalles de ${row['id']}: ${row['description'] ?? row['title']}`);
+    } else if (action === 'edit') {
+      this.notif.info(`Acción de edición para ${row['id']}.`);
     }
-  }
-
-  onRefresh(event: CustomEvent): void {
-    this.loadTickets();
-    setTimeout(() => (event.target as HTMLIonRefresherElement).complete(), 800);
   }
 
   isInvalid(field: string): boolean {
     const ctrl = this.ticketForm.get(field);
-    return !!(ctrl?.invalid && (ctrl.dirty || ctrl.touched));
+    return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
 
   private initForm(): void {
     this.ticketForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(5)]],
-      description: ['', [Validators.required, Validators.minLength(20)]],
+      description: ['', [Validators.required, Validators.minLength(10)]],
       priority: ['MEDIUM', Validators.required],
       category: ['SOFTWARE', Validators.required],
     });
   }
 
-  private buildStats(list: Ticket[]): void {
+  private computeStats(tickets: Ticket[]): void {
     this.stats = [
-      { label: 'Abiertos',    count: list.filter(t => t.status === 'OPEN').length,        color: 'red'    },
-      { label: 'En progreso', count: list.filter(t => t.status === 'IN_PROGRESS').length, color: 'orange' },
-      { label: 'Resueltos',   count: list.filter(t => t.status === 'RESOLVED').length,    color: 'green'  },
-      { label: 'Cerrados',    count: list.filter(t => t.status === 'CLOSED').length,      color: 'gray'   },
+      { label: 'Abiertos',     count: tickets.filter((t) => t.status === 'OPEN').length,        color: 'red' },
+      { label: 'En progreso',  count: tickets.filter((t) => t.status === 'IN_PROGRESS').length, color: 'orange' },
+      { label: 'Resueltos',    count: tickets.filter((t) => t.status === 'RESOLVED').length,    color: 'green' },
+      { label: 'Cerrados',     count: tickets.filter((t) => t.status === 'CLOSED').length,      color: 'gray' },
     ];
   }
 }
