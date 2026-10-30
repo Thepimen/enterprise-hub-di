@@ -235,3 +235,41 @@ ion-modal ion-toolbar {
     transition-duration: 0.001ms !important;
   }
 }
+
+
+/* ==========================================
+   IONIC ROUTER OUTLET & STANDALONE PAGES (CRITICAL FIX)
+   ========================================== */
+.ion-page-hidden {
+  display: none !important;
+}
+
+app-welcome,
+app-login,
+app-register,
+app-dashboard,
+app-user-dashboard,
+app-tickets,
+app-help {
+  display: flex !important;
+  flex-direction: column !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  contain: layout size style;
+  overflow: hidden;
+}
+
+app-welcome.ion-page-hidden,
+app-login.ion-page-hidden,
+app-register.ion-page-hidden,
+app-dashboard.ion-page-hidden,
+app-user-dashboard.ion-page-hidden,
+app-tickets.ion-page-hidden,
+app-help.ion-page-hidden {
+  display: none !important;
+}
