@@ -4,48 +4,52 @@
  * Utilizado por AuthService, Functional Guards (authGuard, roleGuard) y vistas protegidas.
  */
 
+/** Roles disponibles en el sistema con soporte granular (ADMIN, SUPERVISOR, USER) */
+export type SystemRole = 'ADMIN' | 'SUPERVISOR' | 'USER' | 'admin' | 'user';
+
 /**
  * Interfaz oficial de sesión de usuario para Control de Acceso y Functional Guards (Módulo 0488).
  */
 export interface UserSession {
-  username: string;
-  role: 'admin' | 'user';
-  isAuthenticated: boolean;
+  readonly username: string;
+  readonly role: 'admin' | 'user' | 'ADMIN' | 'SUPERVISOR' | 'USER';
+  readonly isAuthenticated: boolean;
+  readonly token?: string;
 }
 
-/** Roles disponibles en el sistema */
-export type UserRole = 'admin' | 'user' | 'ADMIN' | 'USER';
+/** Roles legados o extendidos */
+export type UserRole = SystemRole;
 
 /** Modelo extendido de usuario autenticado */
 export interface User {
-  id: string;
-  name: string;
-  username?: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-  createdAt: Date;
-  lastLogin?: Date;
+  readonly id: string;
+  readonly name: string;
+  readonly username?: string;
+  readonly email: string;
+  readonly role: UserRole;
+  readonly avatar?: string;
+  readonly createdAt: Date;
+  readonly lastLogin?: Date;
 }
 
-/** Payload de credenciales para login */
+/** Payload inmutable de credenciales para login */
 export interface LoginCredentials {
-  username?: string;
-  email?: string;
-  password: string;
+  readonly username?: string;
+  readonly email?: string;
+  readonly password: string;
 }
 
-/** Payload para registro de nuevo usuario */
+/** Payload inmutable para registro de nuevo usuario */
 export interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
+  readonly name: string;
+  readonly email: string;
+  readonly password: string;
+  readonly confirmPassword: string;
 }
 
-/** Respuesta de la API de autenticación */
+/** Respuesta de la API de autenticación con token Bearer */
 export interface AuthResponse {
-  user: UserSession;
-  token: string;
-  expiresAt: number;
+  readonly user: UserSession;
+  readonly token: string;
+  readonly expiresAt: number;
 }

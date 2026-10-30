@@ -20,7 +20,7 @@ import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonHeader, IonToolbar, IonButtons,
-  IonIcon, IonSpinner, IonRefresher, IonRefresherContent, MenuController
+  IonIcon, IonSkeletonText, IonRefresher, IonRefresherContent, MenuController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -61,7 +61,7 @@ type TelemetryMode = 'combined' | 'cpu' | 'ram' | 'iops';
   imports: [
     CommonModule, RouterLink,
     IonContent, IonHeader, IonToolbar, IonButtons,
-    IonIcon, IonSpinner, IonRefresher, IonRefresherContent,
+    IonIcon, IonSkeletonText, IonRefresher, IonRefresherContent,
   ],
   template: `
     <!-- CABECERA NOC CON UN ÚNICO BOTÓN DE MENÚ A LA IZQUIERDA -->
@@ -303,10 +303,30 @@ type TelemetryMode = 'combined' | 'cpu' | 'ram' | 'iops';
           </div>
         </section>
 
-        <!-- Loading state -->
-        <div *ngIf="isLoading" class="loading-overlay" role="status" aria-live="polite">
-          <ion-spinner name="crescent"></ion-spinner>
-          <p>Sincronizando telemetría concurrente (forkJoin SQL + NoSQL)...</p>
+        <!-- FACETA 3 UX: Skeleton Loaders en sustitución de Spinners Genéricos -->
+        <div *ngIf="isLoading" class="skeleton-bento-grid" role="status" aria-live="polite" aria-label="Cargando telemetría del clúster">
+          <div class="skeleton-main-col">
+            <div class="skeleton-panel">
+              <div class="skeleton-top-row">
+                <ion-skeleton-text [animated]="true" style="width: 35%; height: 24px; border-radius: 6px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 25%; height: 28px; border-radius: 999px;"></ion-skeleton-text>
+              </div>
+              <div class="skeleton-kpis-strip">
+                <ion-skeleton-text [animated]="true" style="width: 23%; height: 55px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 23%; height: 55px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 23%; height: 55px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 23%; height: 55px; border-radius: 8px;"></ion-skeleton-text>
+              </div>
+              <ion-skeleton-text [animated]="true" style="width: 100%; height: 240px; border-radius: 10px; margin-top: 14px;"></ion-skeleton-text>
+            </div>
+            <div class="skeleton-blade-rack">
+              <ion-skeleton-text [animated]="true" style="width: 100%; height: 48px; border-radius: 8px; margin-bottom: 8px;" *ngFor="let b of [1,2,3,4]"></ion-skeleton-text>
+            </div>
+          </div>
+          <div class="skeleton-side-col">
+            <ion-skeleton-text [animated]="true" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px;"></ion-skeleton-text>
+            <ion-skeleton-text [animated]="true" style="width: 100%; height: 180px; border-radius: 12px;"></ion-skeleton-text>
+          </div>
         </div>
 
         <ng-container *ngIf="!isLoading">
@@ -1719,6 +1739,45 @@ type TelemetryMode = 'combined' | 'cpu' | 'ram' | 'iops';
       text-decoration: none;
     }
     .footer-links a:hover { text-decoration: underline; }
+
+    
+    /* FACETA 3 UX: SKELETON LOADERS */
+    .skeleton-bento-grid {
+      display: grid;
+      grid-template-columns: 8fr 4fr;
+      gap: 16px;
+      padding: 16px 0;
+    }
+    @media (max-width: 1100px) {
+      .skeleton-bento-grid { grid-template-columns: 1fr; }
+    }
+    .skeleton-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .skeleton-top-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .skeleton-kpis-strip {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .skeleton-blade-rack {
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .skeleton-side-col {
+      display: flex;
+      flex-direction: column;
+    }
 
     .loading-overlay {
       display: flex;

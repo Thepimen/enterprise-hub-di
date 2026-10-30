@@ -142,7 +142,7 @@ addIcons({
                 </span>
               </div>
               <p class="probe-desc">
-                Pulsa para intentar navegar a <code>/admin</code> sin iniciar sesión y verificar cómo <code>authGuard</code> bloquea el acceso y adjunta <code>?returnUrl=%2Fadmin</code>:
+                Pulsa para intentar navegar a <code>/admin</code> sin iniciar sesión y verificar cómo <code>authGuard</code> bloquea el acceso y adjunta <code>?returnUrl=%2Fdashboard</code>:
               </p>
               <button
                 type="button"
@@ -151,7 +151,7 @@ addIcons({
                 (click)="simulateUnauthorizedAccess()"
               >
                 <ion-icon name="lock-closed-outline"></ion-icon>
-                <span>Probar acceso sin sesión a /admin (Test authGuard)</span>
+                <span>Probar acceso sin sesión a /dashboard (Test authGuard)</span>
               </button>
             </div>
           </section>
@@ -273,7 +273,7 @@ addIcons({
                   >
                     <div class="launcher-top">
                       <span class="launcher-pill launcher-pill--admin">ROL: ADMIN</span>
-                      <span class="launcher-route">/admin</span>
+                      <span class="launcher-route">/dashboard</span>
                     </div>
                     <strong class="launcher-title">Admin (admin / 123)</strong>
                     <span class="launcher-desc">Consola NOC, telemetría y control total</span>
@@ -880,7 +880,7 @@ export class LoginPage implements OnInit {
 
     if (this.authService.isAuthenticated()) {
       const role = this.authService.currentUser()?.role;
-      this.router.navigate([role === 'admin' ? '/admin' : '/user-dashboard']);
+      this.router.navigate([(role === 'admin' || role === 'ADMIN') ? '/dashboard' : '/user-dashboard']);
     }
   }
 
@@ -895,12 +895,12 @@ export class LoginPage implements OnInit {
 
   /**
    * Simula un intento de navegación sin sesión a /admin para demostrar que authGuard
-   * redirige atómicamente a /login?returnUrl=%2Fadmin
+   * redirige atómicamente a /login?returnUrl=%2Fdashboard
    */
   async simulateUnauthorizedAccess(): Promise<void> {
-    await this.router.navigate(['/admin']);
-    this.loginError = 'authGuard interceptó el acceso sin sesión a /admin y redirigió con returnUrl.';
-    this.notify.warning('authGuard: Acceso denegado sin sesión -> /login?returnUrl=%2Fadmin');
+    await this.router.navigate(['/dashboard']);
+    this.loginError = 'authGuard interceptó el acceso sin sesión a /dashboard y redirigió con returnUrl.';
+    this.notify.warning('authGuard: Acceso denegado sin sesión -> /login?returnUrl=%2Fdashboard');
   }
 
   quickLogin(user: string, pass: string): void {
@@ -938,7 +938,8 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    const target = session?.role === 'admin' ? '/admin' : '/user-dashboard';
+    const roleUpper = (session?.role || '').toUpperCase();
+    const target = roleUpper === 'ADMIN' ? '/dashboard' : '/user-dashboard';
     this.router.navigate([target]);
   }
 }
