@@ -2,6 +2,7 @@
  * @file sql-mock.service.ts
  * @description Simulación de API REST/SQL con datos relacionales de usuarios y tickets.
  * Implementa retraso artificial de 300ms para simular latencia de red real.
+ * Incorpora sanitización defensiva mediante sanitizeQueryInput() contra inyecciones SQL/NoSQL (CWE-89, CWE-943).
  */
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
@@ -9,6 +10,7 @@ import { delay, map } from 'rxjs/operators';
 import { Ticket, CreateTicketPayload, TicketSummary, TicketStatus, TicketPriority, TicketCategory } from '../models/ticket.model';
 import { SummaryMetrics } from '../models/metric.model';
 import { User } from '../models/auth.model';
+import { sanitizeQueryInput } from '../utils/security.util';
 
 /** Latencia simulada de base de datos SQL */
 const SQL_DELAY_MS = 300;
@@ -92,27 +94,33 @@ export class SqlMockService {
   }
 
   /**
-   * Obtiene un ticket por ID.
+   * Obtiene un ticket por ID con sanitización preventiva de entrada.
    */
   getTicketById(id: string): Observable<Ticket | undefined> {
-    return of(this.tickets.find((t) => t.id === id)).pipe(delay(SQL_DELAY_MS));
+    const cleanId = sanitizeQueryInput(id);
+    return of(this.tickets.find((t) => t.id === cleanId)).pipe(delay(SQL_DELAY_MS));
   }
 
   /**
-   * Crea un nuevo ticket en la base de datos simulada.
+   * Crea un nuevo ticket en la base de datos simulada con sanitización estricta.
    */
   createTicket(payload: CreateTicketPayload, createdBy: string): Observable<Ticket> {
+    const cleanTitle = sanitizeQueryInput(payload.title);
+    const cleanDesc = sanitizeQueryInput(payload.description);
+    const cleanCreatedBy = sanitizeQueryInput(createdBy);
+    const cleanTags = (payload.tags ?? []).map((tag) => sanitizeQueryInput(tag));
+
     const newTicket: Ticket = {
       id: `tkt-${String(this.nextId++).padStart(3, '0')}`,
-      title: payload.title,
-      description: payload.description,
+      title: cleanTitle,
+      description: cleanDesc,
       status: 'OPEN',
       priority: payload.priority,
       category: payload.category,
-      createdBy,
+      createdBy: cleanCreatedBy,
       createdAt: new Date(),
       updatedAt: new Date(),
-      tags: payload.tags ?? [],
+      tags: cleanTags,
     };
     this.tickets = [newTicket, ...this.tickets];
     return of(newTicket).pipe(delay(SQL_DELAY_MS));
@@ -122,9 +130,10 @@ export class SqlMockService {
    * Actualiza el estado de un ticket.
    */
   updateTicketStatus(id: string, status: TicketStatus): Observable<Ticket> {
-    const idx = this.tickets.findIndex((t) => t.id === id);
-    if (idx === -1) throw new Error(`Ticket ${id} no encontrado`);
-    const updated = {
+    const cleanId = sanitizeQueryInput(id);
+    const idx = this.tickets.findIndex((t) => t.id === cleanId);
+    if (idx === -1) throw new Error(`Ticket ${cleanId} no encontrado`);
+    const updated: Ticket = {
       ...this.tickets[idx],
       status,
       updatedAt: new Date(),
@@ -187,14 +196,14 @@ export class SqlMockService {
   }
 
   /**
-   * Verifica si un email ya existe en el sistema (para validador asíncrono).
-   * @param email - Email a verificar
+   * Verifica si un email ya existe en el sistema (para validador asíncrono con sanitización).
    */
   checkEmailExists(email: string): Observable<boolean> {
+    const cleanEmail = sanitizeQueryInput(email);
     const exists = SYSTEM_USERS.some(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
+      (u) => u.email.toLowerCase() === cleanEmail.toLowerCase()
     );
-    return of(exists).pipe(delay(500)); // Simula latencia de validación asíncrona
+    return of(exists).pipe(delay(500));
   }
 
   /** Obtiene la lista de usuarios del sistema */

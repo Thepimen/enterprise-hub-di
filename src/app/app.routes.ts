@@ -1,7 +1,7 @@
 /**
  * @file app.routes.ts
- * @description Enrutamiento modular con Lazy Loading (loadComponent) y protección mediante
- * Functional Guards (authGuard y factoría roleGuard('admin' | 'user')).
+ * @description Configuración central de rutas con Lazy Loading (loadComponent) y Functional Guards.
+ * Integra la nueva Landing Page (/welcome) como punto de entrada raíz y control granular por roles.
  */
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
@@ -10,8 +10,13 @@ import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'welcome',
     pathMatch: 'full',
+  },
+  {
+    path: 'welcome',
+    loadComponent: () => import('./pages/welcome/welcome.page').then((m) => m.WelcomePage),
+    title: 'Bienvenida | EnterpriseHub PWA',
   },
   {
     path: 'login',
@@ -24,29 +29,28 @@ export const routes: Routes = [
     title: 'Crear Cuenta | EnterpriseHub',
   },
   {
-    path: 'admin',
-    canActivate: [authGuard, roleGuard('admin')],
-    loadComponent: () => import('./pages/admin/admin.page').then((m) => m.AdminPage),
-    title: 'Consola de Administración | EnterpriseHub',
-  },
-  {
-    path: 'user-dashboard',
-    canActivate: [authGuard, roleGuard('user')],
-    loadComponent: () =>
-      import('./pages/user-dashboard/user-dashboard.page').then((m) => m.UserDashboardPage),
-    title: 'Panel de Operador | EnterpriseHub',
-  },
-  {
     path: 'dashboard',
-    canActivate: [authGuard, roleGuard('admin')],
+    canActivate: [authGuard, roleGuard(['ADMIN'])],
     loadComponent: () => import('./pages/dashboard/dashboard.page').then((m) => m.DashboardPage),
     title: 'Telemetría de Clúster | EnterpriseHub',
   },
   {
+    path: 'admin',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
+  },
+  {
     path: 'tickets',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(['ADMIN', 'SUPERVISOR', 'USER'])],
     loadComponent: () => import('./pages/tickets/tickets.page').then((m) => m.TicketsPage),
     title: 'Gestión de Incidencias | EnterpriseHub',
+  },
+  {
+    path: 'user-dashboard',
+    canActivate: [authGuard, roleGuard(['USER'])],
+    loadComponent: () =>
+      import('./pages/user-dashboard/user-dashboard.page').then((m) => m.UserDashboardPage),
+    title: 'Panel de Operador | EnterpriseHub',
   },
   {
     path: 'help',
@@ -56,6 +60,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'login',
+    redirectTo: 'welcome',
   },
 ];
