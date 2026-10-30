@@ -238,7 +238,7 @@ addIcons({
                   (click)="testAdminRouteProtection()"
                 >
                   <ion-icon name="lock-closed-outline"></ion-icon>
-                  <span>Probar acceso a /admin (Verificar bloqueo roleGuard)</span>
+                  <span>Probar acceso a /dashboard (Verificar bloqueo roleGuard(['ADMIN']))</span>
                 </button>
 
                 <a routerLink="/tickets" class="btn-primary-action">
@@ -1258,10 +1258,10 @@ export class UserDashboardPage implements OnInit {
   }
 
   async testAdminRouteProtection(): Promise<void> {
-    await this.router.navigate(['/admin']);
+    await this.router.navigate(['/dashboard']);
     this.blockedAttempts.update((n) => n + 1);
     const msg =
-      "Acceso denegado a '/admin': roleGuard('admin') verificó que tu rol actual es 'user' y ejecutó redirección atómica UrlTree de vuelta a '/user-dashboard'.";
+      "Acceso denegado a '/dashboard': roleGuard(['ADMIN']) verificó que tu rol actual es 'user' y ejecutó redirección atómica UrlTree de vuelta a '/user-dashboard'.";
     this.guardTestMessage.set(msg);
     this.notify.warning(msg);
   }

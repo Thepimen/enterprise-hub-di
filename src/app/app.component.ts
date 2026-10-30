@@ -23,6 +23,7 @@ import {
   moonOutline, globeOutline, logoGithub, openOutline, terminalOutline
 } from 'ionicons/icons';
 import { AuthService } from './core/services/auth.service';
+import { HasRoleDirective } from './shared/directives/has-role.directive';
 
 addIcons({
   serverOutline, shieldCheckmarkOutline, personOutline,
@@ -38,7 +39,7 @@ addIcons({
   imports: [
     CommonModule, RouterLink, RouterLinkActive,
     IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar,
-    IonContent, IonFooter, IonIcon, IonMenuToggle
+    IonContent, IonFooter, IonIcon, IonMenuToggle, HasRoleDirective
   ],
   template: `
     <ion-app>
@@ -107,9 +108,9 @@ addIcons({
             </button>
 
             <div class="nav-group-items" *ngIf="openSections().rbac">
-              <ion-menu-toggle auto-hide="false" *ngIf="authService.currentUser()?.role === 'admin'">
+              <ion-menu-toggle auto-hide="false" *hasRole="['ADMIN']">
                 <a
-                  routerLink="/admin"
+                  routerLink="/dashboard"
                   routerLinkActive="drawer-link--active"
                   class="drawer-link"
                 >
@@ -271,7 +272,7 @@ addIcons({
       >
         <a
           *ngIf="authService.currentUser()?.role === 'admin'"
-          routerLink="/admin"
+          routerLink="/dashboard"
           routerLinkActive="dock-item--active"
           class="dock-item"
         >

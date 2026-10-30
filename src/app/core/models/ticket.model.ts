@@ -1,6 +1,8 @@
 /**
  * @file ticket.model.ts
  * @description Modelos de dominio para el sistema de tickets técnicos B2B.
+ * Incluye DTOs inmutables con propiedades 'readonly' para prevención de mutaciones involuntarias
+ * y cumplimiento de arquitectura defensiva (Defensa en Profundidad).
  */
 
 /** Estados posibles de un ticket */
@@ -14,44 +16,47 @@ export type TicketCategory = 'HARDWARE' | 'SOFTWARE' | 'NETWORK' | 'SECURITY' | 
 
 /** Modelo principal de ticket */
 export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  category: TicketCategory;
-  assignedTo?: string;
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-  resolvedAt?: Date;
-  tags: string[];
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly status: TicketStatus;
+  readonly priority: TicketPriority;
+  readonly category: TicketCategory;
+  readonly assignedTo?: string;
+  readonly createdBy: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly resolvedAt?: Date;
+  readonly tags: readonly string[];
 }
 
-/** Payload para crear un nuevo ticket */
+/**
+ * Payload inmutable (DTO) para registrar una nueva incidencia.
+ * Los campos 'readonly' impiden la alteración de datos tras su validación.
+ */
 export interface CreateTicketPayload {
-  title: string;
-  description: string;
-  priority: TicketPriority;
-  category: TicketCategory;
-  tags?: string[];
+  readonly title: string;
+  readonly description: string;
+  readonly priority: TicketPriority;
+  readonly category: TicketCategory;
+  readonly tags?: readonly string[];
 }
 
 /** Estadísticas resumidas para el Dashboard */
 export interface TicketSummary {
-  total: number;
-  open: number;
-  inProgress: number;
-  resolved: number;
-  closed: number;
-  criticalCount: number;
-  avgResolutionTimeHours: number;
+  readonly total: number;
+  readonly open: number;
+  readonly inProgress: number;
+  readonly resolved: number;
+  readonly closed: number;
+  readonly criticalCount: number;
+  readonly avgResolutionTimeHours: number;
 }
 
 /** Columna para el componente DataTable */
 export interface TableColumn {
-  key: string;
-  label: string;
-  sortable?: boolean;
-  width?: string;
+  readonly key: string;
+  readonly label: string;
+  readonly sortable?: boolean;
+  readonly width?: string;
 }

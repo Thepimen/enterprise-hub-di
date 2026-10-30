@@ -1,9 +1,10 @@
 /**
  * @file tickets.page.ts
- * @description Centro de Incidencias (TicketsPage) accesible para ADMIN y USER.
+ * @description Centro de Incidencias (TicketsPage) accesible para ADMIN, SUPERVISOR y USER.
  * - Único botón de menú lateral en cabecera (sin duplicados).
  * - Píldoras de filtro interactivo por estado y prioridad.
  * - Tabla desacoplada OnPush con acciones funcionales.
+ * - Faceta 3 UX: Skeleton Loaders con ion-skeleton-text en sustitución de spinners genéricos.
  */
 import {
   Component, OnInit, OnDestroy, inject,
@@ -15,7 +16,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-  IonButton, IonIcon, IonSpinner, IonModal,
+  IonButton, IonIcon, IonModal, IonSkeletonText,
   IonInput, IonSelect, IonSelectOption, IonTextarea,
   IonGrid, IonRow, IonCol,
   IonRefresher, IonRefresherContent, IonFab, IonFabButton, MenuController
@@ -47,7 +48,7 @@ addIcons({
   imports: [
     CommonModule, ReactiveFormsModule, DataTableComponent,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
-    IonButton, IonIcon, IonSpinner, IonModal,
+    IonButton, IonIcon, IonModal, IonSkeletonText,
     IonInput, IonSelect, IonSelectOption, IonTextarea,
     IonGrid, IonRow, IonCol,
     IonRefresher, IonRefresherContent, IonFab, IonFabButton,
@@ -117,7 +118,7 @@ addIcons({
               <span class="bc-sep">/</span>
               <span class="bc-current">Gestión de Incidencias ({{ authService.currentUser()?.username }} · {{ authService.currentUser()?.role | uppercase }})</span>
             </div>
-            <h1 class="tickets-title">Centro de Incidencias & SLA</h1>
+            <h1 class="tickets-title">Centro de Incidencias &amp; SLA</h1>
             <p class="tickets-subtitle">Haz clic en cualquier píldora de estado para filtrar instantáneamente la tabla</p>
           </div>
 
@@ -146,9 +147,28 @@ addIcons({
           </div>
         </header>
 
-        <div *ngIf="isLoading" class="loading-block" role="status" aria-live="polite">
-          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-          <span>Consultando repositorio de incidencias...</span>
+        <!-- FACETA 3 UX: Skeleton Loaders en sustitución de Spinners Genéricos -->
+        <div *ngIf="isLoading" class="skeleton-table-wrapper" role="status" aria-live="polite" aria-label="Cargando incidencias">
+          <div class="skeleton-search-bar">
+            <ion-skeleton-text [animated]="true" style="width: 100%; height: 42px; border-radius: 8px;"></ion-skeleton-text>
+          </div>
+          <div class="skeleton-card" *ngFor="let i of [1, 2, 3, 4, 5, 6]">
+            <div class="skeleton-cell" style="width: 12%;">
+              <ion-skeleton-text [animated]="true" style="height: 18px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+            <div class="skeleton-cell" style="width: 45%;">
+              <ion-skeleton-text [animated]="true" style="height: 18px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+            <div class="skeleton-cell" style="width: 15%;">
+              <ion-skeleton-text [animated]="true" style="height: 18px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+            <div class="skeleton-cell" style="width: 15%;">
+              <ion-skeleton-text [animated]="true" style="height: 18px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+            <div class="skeleton-cell" style="width: 13%;">
+              <ion-skeleton-text [animated]="true" style="height: 18px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+          </div>
         </div>
 
         <section *ngIf="!isLoading" aria-label="Tabla de tickets técnicos">
@@ -253,11 +273,11 @@ addIcons({
                       interface="popover"
                       class="modal-select"
                     >
-                      <ion-select-option value="HARDWARE">Infraestructura & Hardware</ion-select-option>
-                      <ion-select-option value="SOFTWARE">Aplicación & Software</ion-select-option>
-                      <ion-select-option value="NETWORK">Conectividad & Red</ion-select-option>
-                      <ion-select-option value="SECURITY">Ciberseguridad & Acceso</ion-select-option>
-                      <ion-select-option value="OTHER">General & Otras peticiones</ion-select-option>
+                      <ion-select-option value="HARDWARE">Infraestructura &amp; Hardware</ion-select-option>
+                      <ion-select-option value="SOFTWARE">Aplicación &amp; Software</ion-select-option>
+                      <ion-select-option value="NETWORK">Conectividad &amp; Red</ion-select-option>
+                      <ion-select-option value="SECURITY">Ciberseguridad &amp; Acceso</ion-select-option>
+                      <ion-select-option value="OTHER">General &amp; Otras peticiones</ion-select-option>
                     </ion-select>
                   </div>
                 </ion-col>
@@ -267,8 +287,7 @@ addIcons({
             <div class="form-actions">
               <button type="button" class="modal-btn-cancel" (click)="closeModal()">Cancelar</button>
               <button type="submit" class="modal-btn-submit" [disabled]="ticketForm.invalid || isSaving">
-                <ion-spinner *ngIf="isSaving" name="crescent" aria-hidden="true"></ion-spinner>
-                <span *ngIf="!isSaving">Crear Ticket</span>
+                <span>Crear Ticket</span>
               </button>
             </div>
           </form>
@@ -429,13 +448,25 @@ addIcons({
       font-family: var(--font-mono);
     }
 
-    .loading-block {
+    /* FACETA 3 UX: SKELETON LOADERS */
+    .skeleton-table-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px 0;
+    }
+    .skeleton-search-bar {
+      margin-bottom: 8px;
+    }
+    .skeleton-card {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 48px;
-      color: var(--color-text-secondary);
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      background: var(--surface-card);
+      border: 1px solid var(--color-border);
     }
 
     .modal-toolbar {
